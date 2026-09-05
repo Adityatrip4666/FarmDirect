@@ -167,6 +167,36 @@ The administrator can monitor:
 * Completed orders
 
 ---
+### Direct consumer marketplace
+
+Example:
+
+Farmer: Ravi
+Product: Organic Tomatoes
+Quantity: 500 kg
+Price: ₹35/kg
+Location: Nashik
+
+A normal consumer can browse this product and order 2 kg, 5 kg, etc.
+
+This gives FarmDirect a B2C marketplace character.
+
+### Bulk buyer requirements
+
+This could be your strongest differentiator.
+
+A restaurant/food-processing company posts:
+
+Required: 5,000 kg onions
+Maximum price: ₹25/kg
+Delivery location: Pune
+Required by: 15 October
+
+Farmers/FPOs can respond with offers.
+
+FarmDirect then becomes:
+
+B2C + B2B agricultural marketplace.
 
 ## 6. System Architecture
 

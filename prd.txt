@@ -1,0 +1,386 @@
+# FarmDirect Product Requirements Document (PRD)
+
+## 1. Product Summary
+
+FarmDirect is a direct farmer-to-buyer marketplace that connects farmers and Farmer Producer Organizations (FPOs) with consumers and bulk buyers. The product reduces intermediaries in the agricultural supply chain, helping farmers earn better margins while allowing buyers to source fresh produce directly and transparently.
+
+The platform is built with Python, Flask, HTML, CSS, and SQLite. The initial release focuses on a simple but functional marketplace where farmers can list produce, buyers can browse and order, and administrators can monitor marketplace activity.
+
+---
+
+## 2. Problem Statement
+
+Agricultural produce often passes through several intermediaries before reaching consumers and businesses. This leads to:
+
+- Lower income for farmers
+- Higher prices for buyers
+- Lack of transparency in sourcing
+- Limited visibility into availability, demand, and shipment status
+
+FarmDirect solves this by creating a digital marketplace where farmers/FPOs can publish products directly and buyers can purchase them without depending on traditional supply-chain layers.
+
+---
+
+## 3. Product Goals
+
+### Primary Goals
+- Connect farmers and FPOs directly with buyers
+- Improve price transparency for all parties
+- Simplify listing, discovery, and ordering of agricultural products
+- Support both B2C and B2B transactions
+- Offer basic order and delivery tracking
+
+### Secondary Goals
+- Create a lightweight MVP that can be demoed successfully
+- Enable admin oversight of users, products, and orders
+- Allow future expansion into payments, analytics, and mobile access
+
+---
+
+## 4. Target Users
+
+### 4.1 Farmers / FPOs
+Farmers and FPOs need a way to:
+- Create and manage their profiles
+- List agricultural products
+- Update product quantity, price, and location
+- Manage stock availability
+- Receive and review buyer orders
+- Accept, reject, and update order statuses
+
+### 4.2 Consumers
+Consumers need a way to:
+- Browse fresh farm products
+- Search by product name, category, or location
+- View product details and farmer information
+- Add products to a cart
+- Place orders for small quantities
+- Track order progress
+
+### 4.3 Bulk Buyers
+Bulk buyers include restaurants, retailers, hotels, and food businesses. They need to:
+- Search for products in larger quantities
+- Find matching farmers/FPOs
+- Place bulk orders
+- Track order fulfillment
+
+### 4.4 Administrator
+The admin manages:
+- User accounts
+- Product listings
+- Order review and monitoring
+- Delivery status oversight
+- Platform statistics
+
+---
+
+## 5. Core User Needs
+
+### Farmer Needs
+- Quick product listing
+- Control over quantity, price, and availability
+- Clear visibility into incoming orders
+- Ability to update status after order acceptance
+
+### Buyer Needs
+- Easy product discovery
+- Trust in product source and quality
+- Visible pricing and farmer details
+- Smooth order placement and tracking
+
+### Bulk Buyer Needs
+- Ability to search for high-volume supply
+- Ability to negotiate and place larger orders
+- Reliable visibility into quantity, location, and order status
+
+---
+
+## 6. Key Features
+
+### 6.1 User Authentication
+- Registration and login
+- Role-based access for farmers, buyers, and admin
+- Secure handling of user credentials
+
+### 6.2 Product Management
+Farmers/FPOs should be able to:
+- Add product name, category, quantity, price, location, harvest date, and availability
+- Edit product listings
+- Remove listings when unavailable
+
+### 6.3 Marketplace Experience
+Buyers should be able to:
+- Browse all available products
+- Search and filter products
+- View product details and seller information
+- See location and price information clearly
+
+### 6.4 Cart and Order Flow
+Consumers should be able to:
+1. Select a product
+2. Add it to cart
+3. Set desired quantity
+4. Place an order
+5. Track order status
+
+Farmers should be able to view and manage these orders.
+
+### 6.5 Bulk Ordering
+Bulk buyers should be able to:
+- Search products by quantity requirement
+- Place larger orders directly with farmers/FPOs
+- Track bulk fulfillment
+
+### 6.6 Delivery Tracking
+The system should support basic delivery information including:
+- Pickup location
+- Delivery location
+- Estimated delivery time
+- Delivery status
+
+Example order status flow:
+- Placed
+- Accepted
+- Preparing
+- Picked Up
+- Out for Delivery
+- Delivered
+
+### 6.7 Admin Dashboard
+Admin should be able to monitor:
+- Total users
+- Registered farmers/FPOs
+- Available products
+- Total orders
+- Pending orders
+- Completed orders
+
+---
+
+## 7. User Stories
+
+### Farmer
+- As a farmer, I want to list my produce so that buyers can discover my products.
+- As a farmer, I want to manage product availability so that I only sell what I have.
+- As a farmer, I want to receive orders so that I can fulfill them efficiently.
+- As a farmer, I want to update order status so that buyers stay informed.
+
+### Consumer
+- As a consumer, I want to browse products so that I can buy fresh produce easily.
+- As a consumer, I want to search products so that I can find what I need quickly.
+- As a consumer, I want to add products to a cart so that I can place one order.
+- As a consumer, I want to track my order so that I know when it will arrive.
+
+### Bulk Buyer
+- As a bulk buyer, I want to search for stock by quantity so that I can fulfill business needs.
+- As a bulk buyer, I want to contact or place orders with farmers directly so that I can reduce supply-chain friction.
+
+### Admin
+- As an admin, I want to view marketplace activity so that I can ensure platform health.
+- As an admin, I want to monitor orders and listings so that I can manage the marketplace.
+
+---
+
+## 8. Functional Requirements
+
+### 8.1 Authentication and User Management
+- Users must be able to sign up and log in
+- Each user must have a role: farmer, consumer, bulk buyer, or admin
+- Role-based access control must restrict dashboard and actions
+
+### 8.2 Product Listing
+- Farmers/FPOs must be able to create product listings
+- Each listing must include product name, category, quantity, price, location, harvest date, and availability
+- Listings must be editable and removable
+
+### 8.3 Marketplace
+- All visible product listings should appear in a marketplace view
+- Users should be able to search and filter products
+- Product detail pages must display farmer information and product attributes
+
+### 8.4 Shopping Cart and Checkout
+- Consumers must be able to add products to cart
+- Quantity updates should be supported before checkout
+- Order creation must calculate total pricing
+
+### 8.5 Orders
+- Buyer orders must be saved with order status
+- Farmers must be able to accept or reject incoming orders
+- Order status must be updated as fulfillment progresses
+
+### 8.6 Delivery Tracking
+- System should capture pickup/delivery information and status updates
+- Order processing lifecycle should be visible to both parties
+
+### 8.7 Admin Features
+- Admin must have access to user management, listing management, and order oversight
+- Admin dashboard should show summary statistics
+
+---
+
+## 9. Non-Functional Requirements
+
+- The application should be simple and easy to use for non-technical farmers and buyers
+- The system should work reliably for a basic marketplace flow
+- User experience should feel clear and minimal
+- The app should run as a lightweight web application with a local SQLite database
+- Data should be stored persistently and securely enough for a demo environment
+
+---
+
+## 10. MVP Scope
+
+The MVP will include the following:
+
+- User registration and login
+- Farmer/FPO product listing
+- Product marketplace with search and filtering
+- Cart flow for consumers
+- Order placement and processing
+- Farmer order management
+- Bulk order support
+- Basic order tracking
+- Admin dashboard
+
+This MVP is centered on the core flow of: farmer lists product -> buyer searches -> buyer orders -> farmer fulfills -> order status updates.
+
+---
+
+## 11. Out of Scope for MVP
+
+The following are not required in the first release:
+
+- Online payment integration
+- Real-time GPS delivery tracking
+- Mobile app
+- Multilingual support
+- Advanced analytics dashboards
+- Quality certification workflows
+- Warehouse or cold-storage integration
+- Government scheme integrations
+
+---
+
+## 12. Success Criteria
+
+The MVP is successful if:
+
+- Farmers can list products successfully
+- Consumers can discover and order products
+- Bulk buyers can place larger orders
+- Farmers can manage incoming orders
+- Buyers can track order status
+- Admin can review platform activity
+- The full direct marketplace transaction can be demonstrated end-to-end
+
+---
+
+## 13. Proposed Screens / Pages
+
+- Home
+- Login
+- Register
+- Farmer Dashboard
+  - Profile
+  - Add Product
+  - My Products
+  - Orders
+- Marketplace
+  - Product Search
+  - Product Details
+  - Cart
+- Consumer Pages
+  - Checkout
+  - My Orders
+  - Order Tracking
+- Bulk Buyer Pages
+  - Product Search
+  - Bulk Orders
+  - Order Tracking
+- Admin Dashboard
+  - Users
+  - Products
+  - Orders
+  - Deliveries
+
+---
+
+## 14. Data Model (High-Level)
+
+### User
+- id
+- name
+- email
+- password
+- phone
+- role
+- location
+
+### Product
+- id
+- farmer_id
+- name
+- category
+- quantity
+- price
+- location
+- harvest_date
+- availability
+
+### Order
+- id
+- buyer_id
+- farmer_id
+- product_id
+- quantity
+- total_price
+- status
+- order_date
+
+### Delivery
+- id
+- order_id
+- pickup_location
+- delivery_location
+- estimated_time
+- status
+
+---
+
+## 15. Expected Impact
+
+FarmDirect aims to create a more transparent and efficient agricultural marketplace by reducing intermediaries and bringing buyers closer to producers.
+
+### For Farmers
+- Better access to buyers
+- Better price visibility
+- Wider reach for produce
+
+### For Consumers
+- Direct access to fresh produce
+- Better price clarity
+- Visibility into source of agricultural products
+
+### For Bulk Buyers
+- Easier supplier discovery
+- Access to larger volumes
+- Direct communication with producers
+
+---
+
+## 16. Future Enhancements
+
+- Payment gateway integration
+- Real-time delivery tracking
+- Mobile app support
+- Multi-language support
+- Quality verification and certification
+- Analytics and reporting
+- Integration with warehousing and cold storage
+- Government subsidies and scheme support
+
+---
+
+## 17. Final Product Vision
+
+FarmDirect should become a trusted digital marketplace for agricultural trade by enabling direct transactions between farmers and buyers, reducing supply-chain inefficiencies, and improving the economics of agricultural commerce.

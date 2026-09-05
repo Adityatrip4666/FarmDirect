@@ -172,9 +172,13 @@ The administrator can monitor:
 Example:
 
 Farmer: Ravi
+
 Product: Organic Tomatoes
+
 Quantity: 500 kg
+
 Price: ₹35/kg
+
 Location: Nashik
 
 A normal consumer can browse this product and order 2 kg, 5 kg, etc.

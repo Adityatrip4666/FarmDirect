@@ -548,6 +548,86 @@ This README currently focuses on the first three stages:
 
 ---
 
+1. e-NAM procedure
+
+The basic e-NAM workflow is centered around the mandi/APMC and electronic bidding. Farmers can register through the portal/app or at an e-NAM mandi. Produce is brought into the mandi, a lot is created, quality/assaying and weighment can take place, traders participate in online bidding, and the winning bid is declared. The farmer can accept or reject the winning price, after which sale documentation and payment are processed.
+
+e-NAM flow:
+
+Farmer → Mandi/APMC → Gate Entry → Lot Creation → Assaying/Quality Check → Trader Bidding → Winner Selected → Farmer Accepts/Rejects → Sale Bill → Payment
+
+For FPOs, e-NAM allows the FPO to aggregate members' produce and sell it as one or multiple lots through e-trading.
+
+2. FarmDirect procedure
+
+Your FarmDirect can follow a direct marketplace model rather than a mandi/auction model.
+
+Farmer/FPO side
+
+Step 1 — Registration
+
+Farmer/FPO creates an account.
+
+↓
+
+Step 2 — Create product listing
+
+For example:
+
+Product: Tomatoes
+Quantity: 1,000 kg
+Price: ₹30/kg
+Location: Nashik
+Quality: Grade A
+
+↓
+
+Step 3 — Product becomes available
+
+Consumers and bulk buyers can see the listing.
+
+↓
+
+Step 4 — Buyer selects product
+
+A consumer can purchase 5 kg.
+
+A bulk buyer can request 500 kg or 1,000 kg.
+
+↓
+
+Step 5 — Order/offer
+
+Buyer places an order or sends an offer.
+
+↓
+
+Step 6 — Farmer/FPO accepts
+
+Farmer/FPO accepts or rejects the order/offer.
+
+↓
+
+Step 7 — Payment
+
+Buyer makes payment through the system.
+
+↓
+
+Step 8 — Delivery
+
+Produce is delivered to the buyer.
+
+↓
+
+Step 9 — Order completion
+
+Buyer confirms receipt and can provide a rating/review.
+
+FarmDirect flow
+
+Farmer/FPO → Product Listing → Consumer/Bulk Buyer → Order/Offer → Farmer Accepts → Payment → Delivery → Review
+
 ## 17. Conclusion
 
 FarmDirect is intended to provide a simple and accessible digital marketplace that brings farmers/FPOs closer to their end buyers.

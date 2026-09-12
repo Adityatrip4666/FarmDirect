@@ -144,6 +144,30 @@ The platform provides basic delivery management by storing:
 * Estimated delivery information
 * Delivery status
 
+Farmer / FPO
+     │
+     │ Product listed
+     ▼
+  FarmDirect
+     │
+     │ Buyer places order
+     ▼
+    Buyer
+     │
+     │ Delivery requested
+     ▼
+Delivery arranged
+     │
+     ├── Farmer/FPO delivers
+     ├── Buyer arranges pickup
+     └── Third-party delivery partner
+     │
+     ▼
+Buyer receives goods
+     │
+     ▼
+Order marked "Delivered"
+
 Order statuses can include:
 
 ```text

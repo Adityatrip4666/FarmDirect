@@ -30,6 +30,11 @@ The main objectives of FarmDirect are:
 * Provide basic order and delivery management.
 * Improve transparency between farmers and buyers.
 
+## Pros & cons
+Pros: Direct marketplace, multiple user roles, bulk buying support, better farmer visibility, structured architecture, role-based security, product search, offer system, scalable design direction, and clear documentation.
+
+Cons: Limited logistics, basic initial payment support, SQLite scalability limits, quality verification challenges, limited real-time communication, delivery dependency, need for user adoption, limited analytics, basic dispute handling, and additional security requirements for production.
+
 ---
 
 ## 4. Target Users

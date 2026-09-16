@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Administrator Dashboard</h2>
+<p>Registered users:</p>
+<table border="1" cellpadding="6">
+    <tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Joined</th></tr>
+    {% for u in users %}
+    <tr>
+        <td>{{ u.id }}</td>
+        <td>{{ u.name }}</td>
+        <td>{{ u.email }}</td>
+        <td>{{ u.role }}</td>
+        <td>{{ u.created_at }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

@@ -563,6 +563,23 @@ Deployment
    ↓
 Maintenance
 ```
+## How Ai can be used 
+
+                         FarmDirect
+                             │
+             ┌───────────────┼────────────────┐
+             │               │                │
+             ▼               ▼                ▼
+       AI Image         AI Freshness      AI Price
+       Quality Check    Assistance         Suggestion
+             │               │                │
+             ▼               ▼                ▼
+       Produce image     Product data      Market/order data
+             │               │                │
+             ▼               ▼                ▼
+       Visual quality    Freshness level    Suggested price
+       indicators        + action           + explanation
+       
 
 This README currently focuses on the first three stages:
 

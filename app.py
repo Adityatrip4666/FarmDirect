@@ -363,6 +363,65 @@ def seller_profile(user_id):
     return render_template("seller_profile.html", user=user, profile=profile)
 
 
+@app.route("/marketplace")
+@role_required("consumer", "bulk_buyer")
+def marketplace():
+    search = request.args.get("search", "").strip()
+    category = request.args.get("category", "").strip()
+    max_price = request.args.get("max_price", "").strip()
+    location = request.args.get("location", "").strip()
+
+    query = """
+        SELECT products.*, users.name AS seller_name, users.role AS seller_role
+        FROM products
+        JOIN users ON products.seller_id = users.id
+        WHERE products.availability = 'Available'
+    """
+
+    params = []
+
+    if search:
+        query += " AND products.name LIKE ?"
+        params.append(f"%{search}%")
+
+    if category:
+        query += " AND products.category = ?"
+        params.append(category)
+
+    if max_price:
+        try:
+            max_price_value = float(max_price)
+
+            if max_price_value < 0:
+                raise ValueError
+
+            query += " AND products.price <= ?"
+            params.append(max_price_value)
+
+        except ValueError:
+            flash("Maximum price must be a valid positive number.", "error")
+            max_price = ""
+
+    if location:
+        query += " AND products.location LIKE ?"
+        params.append(f"%{location}%")
+
+    query += " ORDER BY products.created_at DESC"
+
+    conn = get_db_connection()
+    products = conn.execute(query, params).fetchall()
+    conn.close()
+
+    return render_template(
+        "marketplace.html",
+        products=products,
+        search=search,
+        category=category,
+        max_price=max_price,
+        location=location,
+    )
+
+
 if __name__ == "__main__":
     init_db()
     app.run(debug=True)

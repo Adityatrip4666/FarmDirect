@@ -7,4 +7,13 @@
 {% if session.get('role') in ['farmer', 'fpo'] %}
 <a href="{{ url_for('profile') }}">My Profile</a>
 {% endif %}
+{% if session.get('role') in ['consumer', 'bulk_buyer'] %}
+
+<p>
+    <a href="{{ url_for('marketplace') }}">
+        Browse Marketplace
+    </a>
+</p>
+
+{% endif %}
 {% endblock %}

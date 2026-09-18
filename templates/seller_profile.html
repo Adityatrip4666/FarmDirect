@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Seller Profile - FarmDirect</title>
+</head>
+
+<body>
+
+    <h1>Seller Profile</h1>
+
+    <p><strong>Name:</strong> {{ user['name'] }}</p>
+    <p><strong>Email:</strong> {{ user['email'] }}</p>
+    <p><strong>Role:</strong> {{ user['role'] }}</p>
+
+    <p><strong>Location:</strong> {{ profile['location'] }}</p>
+    <p><strong>Contact:</strong> {{ profile['phone'] }}</p>
+    <p>
+        <strong>Description:</strong>
+        {{ profile['description'] or 'No description provided.' }}
+    </p>
+
+    <br>
+
+    <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+
+</body>
+
+</html>

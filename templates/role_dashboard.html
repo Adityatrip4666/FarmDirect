@@ -4,4 +4,7 @@
 <p>Welcome, {{ session['name'] }}. This is your role-specific dashboard.</p>
 <p>Role-specific features (profiles, products, orders, offers) will be added in upcoming issues.</p>
 <p><a href="{{ url_for('view_account', user_id=session['user_id']) }}">View my account</a></p>
+{% if session.get('role') in ['farmer', 'fpo'] %}
+<a href="{{ url_for('profile') }}">My Profile</a>
+{% endif %}
 {% endblock %}

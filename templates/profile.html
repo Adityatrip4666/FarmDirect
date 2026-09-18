@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>My Profile - FarmDirect</title>
+</head>
+
+<body>
+
+    <h1>My Profile</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+    <p>{{ message }}</p>
+    {% endfor %}
+    {% endwith %}
+
+    {% if profile %}
+    <h2>Profile Details</h2>
+
+    <p><strong>Name:</strong> {{ user.get('name') }}</p>
+    <p><strong>Email:</strong> {{ user.get('email') }}</p>
+    <p><strong>Role:</strong> {{ user.get('role') }}</p>
+    <p><strong>Location:</strong> {{ profile['location'] }}</p>
+    <p><strong>Contact Number:</strong> {{ profile['phone'] }}</p>
+    <p>
+        <strong>Description:</strong>
+        {{ profile['description'] or 'No description provided.' }}
+    </p>
+
+    <hr>
+
+    <h2>Update Profile</h2>
+    {% else %}
+    <h2>Create Profile</h2>
+    {% endif %}
+
+    <form method="POST">
+
+        <label for="location">Location:</label><br>
+        <input type="text" id="location" name="location" value="{{ profile['location'] if profile else '' }}" required>
+        <br><br>
+
+        <label for="phone">Contact Number:</label><br>
+        <input type="text" id="phone" name="phone" value="{{ profile['phone'] if profile else '' }}" required>
+        <br><br>
+
+        <label for="description">Description:</label><br>
+        <textarea id="description" name="description"
+            rows="5">{{ profile['description'] if profile else '' }}</textarea>
+
+        <br><br>
+
+        <button type="submit">
+            {{ 'Update Profile' if profile else 'Create Profile' }}
+        </button>
+
+    </form>
+
+    <br>
+
+    <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+
+</body>
+
+</html>

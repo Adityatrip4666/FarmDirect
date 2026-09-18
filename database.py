@@ -1,6 +1,6 @@
 import sqlite3
 
-DATABASE = 'farmdirect.db'
+DATABASE = "farmdirect.db"
 
 
 def get_db_connection():
@@ -12,7 +12,7 @@ def get_db_connection():
 def init_db():
     conn = get_db_connection()
 
-    conn.execute('''
+    conn.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
@@ -21,9 +21,9 @@ def init_db():
             role TEXT NOT NULL CHECK(role IN ('farmer','fpo','consumer','bulk_buyer','admin')),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-    ''')
+    """)
 
-    conn.execute('''
+    conn.execute("""
         CREATE TABLE IF NOT EXISTS farmer_profiles (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL UNIQUE,
@@ -32,9 +32,9 @@ def init_db():
             description TEXT,
             FOREIGN KEY (user_id) REFERENCES users(id)
         )
-    ''')
+    """)
 
-    conn.execute('''
+    conn.execute("""
         CREATE TABLE IF NOT EXISTS fpo_profiles (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL UNIQUE,
@@ -43,12 +43,28 @@ def init_db():
             description TEXT,
             FOREIGN KEY (user_id) REFERENCES users(id)
         )
-    ''')
+    """)
 
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            seller_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            category TEXT NOT NULL,
+            quantity REAL NOT NULL,
+            price REAL NOT NULL,
+            location TEXT NOT NULL,
+            quality_details TEXT,
+            availability TEXT NOT NULL DEFAULT 'Available',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (seller_id) REFERENCES users(id)
+        )
+    """)
     conn.commit()
     conn.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     init_db()
     print("Database initialized.")

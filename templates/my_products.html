@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>My Products - FarmDirect</title>
+</head>
+
+<body>
+
+    <h1>My Products</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+    <p>{{ message }}</p>
+    {% endfor %}
+    {% endwith %}
+
+    <p>
+        <a href="{{ url_for('add_product') }}">Add New Product</a>
+    </p>
+
+    {% if products %}
+
+    {% for product in products %}
+
+    <hr>
+
+    <h2>{{ product["name"] }}</h2>
+
+    <p>
+        <strong>Category:</strong>
+        {{ product["category"] }}
+    </p>
+
+    <p>
+        <strong>Quantity:</strong>
+        {{ product["quantity"] }}
+    </p>
+
+    <p>
+        <strong>Price:</strong>
+        {{ product["price"] }}
+    </p>
+
+    <p>
+        <strong>Location:</strong>
+        {{ product["location"] }}
+    </p>
+
+    <p>
+        <strong>Quality Details:</strong>
+        {{ product["quality_details"] or "Not provided." }}
+    </p>
+
+    <p>
+        <strong>Availability:</strong>
+        {{ product["availability"] }}
+    </p>
+
+    <p>
+        <a href="{{ url_for('edit_product', product_id=product['id']) }}">
+            Edit
+        </a>
+    </p>
+
+    <form method="POST" action="{{ url_for('delete_product', product_id=product['id']) }}" style="display:inline;">
+
+        <button type="submit" onclick="return confirm('Are you sure you want to delete this product?');">
+            Delete
+        </button>
+
+    </form>
+
+    {% endfor %}
+
+    {% else %}
+
+    <p>You have not added any products yet.</p>
+
+    {% endif %}
+
+    <br>
+
+    <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+
+</body>
+
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Edit Product - FarmDirect</title>
+</head>
+
+<body>
+
+    <h1>Edit Product</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+    <p>{{ message }}</p>
+    {% endfor %}
+    {% endwith %}
+
+    <form method="POST">
+
+        <label for="name">Product Name:</label><br>
+        <input type="text" id="name" name="name" value="{{ product['name'] }}" required>
+        <br><br>
+
+        <label for="category">Category:</label><br>
+        <select id="category" name="category" required>
+            <option value="Vegetables" {% if product['category']=='Vegetables' %}selected{% endif %}>
+                Vegetables
+            </option>
+
+            <option value="Fruits" {% if product['category']=='Fruits' %}selected{% endif %}>
+                Fruits
+            </option>
+
+            <option value="Grains" {% if product['category']=='Grains' %}selected{% endif %}>
+                Grains
+            </option>
+
+            <option value="Pulses" {% if product['category']=='Pulses' %}selected{% endif %}>
+                Pulses
+            </option>
+
+            <option value="Spices" {% if product['category']=='Spices' %}selected{% endif %}>
+                Spices
+            </option>
+
+            <option value="Other" {% if product['category']=='Other' %}selected{% endif %}>
+                Other
+            </option>
+        </select>
+        <br><br>
+
+        <label for="quantity">Quantity:</label><br>
+        <input type="number" id="quantity" name="quantity" min="0.01" step="0.01" value="{{ product['quantity'] }}"
+            required>
+        <br><br>
+
+        <label for="price">Price:</label><br>
+        <input type="number" id="price" name="price" min="0.01" step="0.01" value="{{ product['price'] }}" required>
+        <br><br>
+
+        <label for="location">Location:</label><br>
+        <input type="text" id="location" name="location" value="{{ product['location'] }}" required>
+        <br><br>
+
+        <label for="quality_details">Quality Details:</label><br>
+        <textarea id="quality_details" name="quality_details" rows="5">{{ product['quality_details'] or '' }}</textarea>
+        <br><br>
+
+        <label for="availability">Availability:</label><br>
+        <select id="availability" name="availability">
+
+            <option value="Available" {% if product['availability']=='Available' %}selected{% endif %}>
+                Available
+            </option>
+
+            <option value="Unavailable" {% if product['availability']=='Unavailable' %}selected{% endif %}>
+                Unavailable
+            </option>
+
+        </select>
+        <br><br>
+
+        <button type="submit">Update Product</button>
+
+    </form>
+
+    <br>
+
+    <a href="{{ url_for('my_products') }}">Back to My Products</a>
+    <br><br>
+
+    <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+
+</body>
+
+</html>

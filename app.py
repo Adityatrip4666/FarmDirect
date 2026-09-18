@@ -363,6 +363,222 @@ def seller_profile(user_id):
     return render_template("seller_profile.html", user=user, profile=profile)
 
 
+@app.route("/products/add", methods=["GET", "POST"])
+@role_required("farmer", "fpo")
+def add_product():
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        category = request.form.get("category", "").strip()
+        quantity = request.form.get("quantity", "").strip()
+        price = request.form.get("price", "").strip()
+        location = request.form.get("location", "").strip()
+        quality_details = request.form.get("quality_details", "").strip()
+
+        # Required field validation
+        if not name or not category or not quantity or not price or not location:
+            flash(
+                "Product name, category, quantity, price, and location are required.",
+                "error",
+            )
+            return render_template("add_product.html")
+
+        # Quantity validation
+        try:
+            quantity = float(quantity)
+            if quantity <= 0:
+                raise ValueError
+        except ValueError:
+            flash("Quantity must be a positive number.", "error")
+            return render_template("add_product.html")
+
+        # Price validation
+        try:
+            price = float(price)
+            if price <= 0:
+                raise ValueError
+        except ValueError:
+            flash("Price must be a positive number.", "error")
+            return render_template("add_product.html")
+
+        conn = get_db_connection()
+
+        conn.execute(
+            """
+            INSERT INTO products
+            (seller_id, name, category, quantity, price, location, quality_details)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                session["user_id"],
+                name,
+                category,
+                quantity,
+                price,
+                location,
+                quality_details,
+            ),
+        )
+
+        conn.commit()
+        conn.close()
+
+        flash("Product added successfully.", "success")
+        return redirect(url_for("my_products"))
+
+    return render_template("add_product.html")
+
+
+@app.route("/products")
+@role_required("farmer", "fpo")
+def my_products():
+    conn = get_db_connection()
+
+    products = conn.execute(
+        """
+        SELECT *
+        FROM products
+        WHERE seller_id = ?
+        ORDER BY created_at DESC
+        """,
+        (session["user_id"],),
+    ).fetchall()
+
+    conn.close()
+
+    return render_template("my_products.html", products=products)
+
+
+@app.route("/products/edit/<int:product_id>", methods=["GET", "POST"])
+@role_required("farmer", "fpo")
+def edit_product(product_id):
+    conn = get_db_connection()
+
+    product = conn.execute(
+        """
+        SELECT *
+        FROM products
+        WHERE id = ? AND seller_id = ?
+        """,
+        (product_id, session["user_id"]),
+    ).fetchone()
+
+    if product is None:
+        conn.close()
+        flash("Product not found or you are not authorized to edit it.", "error")
+        return redirect(url_for("my_products"))
+
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        category = request.form.get("category", "").strip()
+        quantity = request.form.get("quantity", "").strip()
+        price = request.form.get("price", "").strip()
+        location = request.form.get("location", "").strip()
+        quality_details = request.form.get("quality_details", "").strip()
+        availability = request.form.get("availability", "").strip()
+
+        # Required field validation
+        if not name or not category or not quantity or not price or not location:
+            conn.close()
+            flash(
+                "Product name, category, quantity, price, and location are required.",
+                "error",
+            )
+            return render_template("edit_product.html", product=product)
+
+        # Quantity validation
+        try:
+            quantity = float(quantity)
+            if quantity <= 0:
+                raise ValueError
+        except ValueError:
+            conn.close()
+            flash("Quantity must be a positive number.", "error")
+            return render_template("edit_product.html", product=product)
+
+        # Price validation
+        try:
+            price = float(price)
+            if price <= 0:
+                raise ValueError
+        except ValueError:
+            conn.close()
+            flash("Price must be a positive number.", "error")
+            return render_template("edit_product.html", product=product)
+
+        if availability not in ["Available", "Unavailable"]:
+            availability = "Available"
+
+        conn.execute(
+            """
+            UPDATE products
+            SET name = ?,
+                category = ?,
+                quantity = ?,
+                price = ?,
+                location = ?,
+                quality_details = ?,
+                availability = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ? AND seller_id = ?
+            """,
+            (
+                name,
+                category,
+                quantity,
+                price,
+                location,
+                quality_details,
+                availability,
+                product_id,
+                session["user_id"],
+            ),
+        )
+
+        conn.commit()
+        conn.close()
+
+        flash("Product updated successfully.", "success")
+        return redirect(url_for("my_products"))
+
+    conn.close()
+
+    return render_template("edit_product.html", product=product)
+
+
+@app.route("/products/delete/<int:product_id>", methods=["POST"])
+@role_required("farmer", "fpo")
+def delete_product(product_id):
+    conn = get_db_connection()
+
+    product = conn.execute(
+        """
+        SELECT id
+        FROM products
+        WHERE id = ? AND seller_id = ?
+        """,
+        (product_id, session["user_id"]),
+    ).fetchone()
+
+    if product is None:
+        conn.close()
+        flash("Product not found or you are not authorized to delete it.", "error")
+        return redirect(url_for("my_products"))
+
+    conn.execute(
+        """
+        DELETE FROM products
+        WHERE id = ? AND seller_id = ?
+        """,
+        (product_id, session["user_id"]),
+    )
+
+    conn.commit()
+    conn.close()
+
+    flash("Product deleted successfully.", "success")
+    return redirect(url_for("my_products"))
+
+
 if __name__ == "__main__":
     init_db()
     app.run(debug=True)

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Order Details - FarmDirect</title>
+</head>
+
+<body>
+
+    <h1>Order #{{ order["id"] }}</h1>
+
+    <p>
+        <strong>Status:</strong>
+        {{ order["status"] }}
+    </p>
+
+    <p>
+        <strong>Placed On:</strong>
+        {{ order["created_at"] }}
+    </p>
+
+    <hr>
+
+    <h2>Order Items</h2>
+
+    {% for item in items %}
+
+    <div>
+
+        <h3>{{ item["name"] }}</h3>
+
+        <p>
+            <strong>Quantity:</strong>
+            {{ item["quantity"] }}
+        </p>
+
+        <p>
+            <strong>Price:</strong>
+            ₹{{ item["price"] }}
+        </p>
+
+        <p>
+            <strong>Subtotal:</strong>
+            ₹{{ item["subtotal"] }}
+        </p>
+
+    </div>
+
+    <hr>
+
+    {% endfor %}
+
+    <h2>
+        Total: ₹{{ order["total_amount"] }}
+    </h2>
+
+    <br>
+
+    <a href="{{ url_for('order_history') }}">
+        Back to My Orders
+    </a>
+
+</body>
+
+</html>

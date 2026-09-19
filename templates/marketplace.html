@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Marketplace - FarmDirect</title>
+</head>
+
+<body>
+
+    <h1>FarmDirect Marketplace</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+    <p>{{ message }}</p>
+    {% endfor %}
+    {% endwith %}
+
+    <form method="GET" action="{{ url_for('marketplace') }}">
+
+        <label for="search">Search Product:</label><br>
+        <input type="text" id="search" name="search" value="{{ search }}" placeholder="e.g. Tomato">
+
+        <br><br>
+
+        <label for="category">Category:</label><br>
+        <select id="category" name="category">
+            <option value="">All Categories</option>
+
+            <option value="Vegetables" {% if category=="Vegetables" %}selected{% endif %}>
+                Vegetables
+            </option>
+
+            <option value="Fruits" {% if category=="Fruits" %}selected{% endif %}>
+                Fruits
+            </option>
+
+            <option value="Grains" {% if category=="Grains" %}selected{% endif %}>
+                Grains
+            </option>
+
+            <option value="Pulses" {% if category=="Pulses" %}selected{% endif %}>
+                Pulses
+            </option>
+
+            <option value="Spices" {% if category=="Spices" %}selected{% endif %}>
+                Spices
+            </option>
+
+            <option value="Other" {% if category=="Other" %}selected{% endif %}>
+                Other
+            </option>
+        </select>
+
+        <br><br>
+
+        <label for="max_price">Maximum Price:</label><br>
+        <input type="number" id="max_price" name="max_price" min="0" step="0.01" value="{{ max_price }}"
+            placeholder="e.g. 100">
+
+        <br><br>
+
+        <label for="location">Location:</label><br>
+        <input type="text" id="location" name="location" value="{{ location }}" placeholder="e.g. Uttarakhand">
+
+        <br><br>
+
+        <button type="submit">Search & Filter</button>
+
+        <a href="{{ url_for('marketplace') }}">Clear Filters</a>
+
+    </form>
+
+    <hr>
+
+    {% if products %}
+
+    <h2>Available Products</h2>
+
+    {% for product in products %}
+
+    <div>
+        <h3>{{ product["name"] }}</h3>
+
+        <p>
+            <strong>Category:</strong>
+            {{ product["category"] }}
+        </p>
+
+        <p>
+            <strong>Quantity:</strong>
+            {{ product["quantity"] }}
+        </p>
+
+        <p>
+            <strong>Price:</strong>
+            ₹{{ product["price"] }}
+        </p>
+
+        <p>
+            <strong>Location:</strong>
+            {{ product["location"] }}
+        </p>
+
+        <p>
+            <strong>Quality Details:</strong>
+            {{ product["quality_details"] or "Not provided." }}
+        </p>
+
+        <p>
+            <strong>Seller:</strong>
+            {{ product["seller_name"] }}
+            ({{ product["seller_role"] }})
+        </p>
+
+        <p>
+            <a href="{{ url_for('seller_profile', user_id=product['seller_id']) }}">
+                View Seller Profile
+            </a>
+        </p>
+
+    </div>
+
+    <hr>
+
+    {% endfor %}
+
+    {% else %}
+
+    <h2>No Products Found</h2>
+
+    <p>
+        No available products match your search or filter criteria.
+    </p>
+
+    {% endif %}
+
+    <br>
+
+    <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+
+</body>
+
+</html>

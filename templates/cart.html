@@ -75,6 +75,13 @@
             Clear Cart
         </button>
     </form>
+    <br>
+
+    <form method="POST" action="{{ url_for('place_order') }}">
+        <button type="submit">
+            Place Order
+        </button>
+    </form>
 
     {% else %}
 

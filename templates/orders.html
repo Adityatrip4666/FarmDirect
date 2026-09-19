@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>My Orders - FarmDirect</title>
+</head>
+
+<body>
+
+    <h1>My Orders</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+    <p>{{ message }}</p>
+    {% endfor %}
+    {% endwith %}
+
+    {% if orders %}
+
+    {% for order in orders %}
+
+    <hr>
+
+    <h2>Order #{{ order["id"] }}</h2>
+
+    <p>
+        <strong>Total:</strong>
+        ₹{{ order["total_amount"] }}
+    </p>
+
+    <p>
+        <strong>Status:</strong>
+        {{ order["status"] }}
+    </p>
+
+    <p>
+        <strong>Placed On:</strong>
+        {{ order["created_at"] }}
+    </p>
+
+    <p>
+        <a href="{{ url_for('order_details', order_id=order['id']) }}">
+            View Order Details
+        </a>
+    </p>
+
+    {% endfor %}
+
+    {% else %}
+
+    <p>You have not placed any orders yet.</p>
+
+    {% endif %}
+
+    <br>
+
+    <a href="{{ url_for('marketplace') }}">
+        Continue Shopping
+    </a>
+
+    <br><br>
+
+    <a href="{{ url_for('dashboard') }}">
+        Back to Dashboard
+    </a>
+
+</body>
+
+</html>

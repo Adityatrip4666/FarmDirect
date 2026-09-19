@@ -1,5 +1,6 @@
 import sqlite3
 
+
 DATABASE = "farmdirect.db"
 
 
@@ -61,6 +62,33 @@ def init_db():
             FOREIGN KEY (seller_id) REFERENCES users(id)
         )
     """)
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS orders (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            buyer_id INTEGER NOT NULL,
+            total_amount REAL NOT NULL,
+            status TEXT NOT NULL DEFAULT 'Placed',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (buyer_id) REFERENCES users(id)
+        )
+    """)
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS order_items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_id INTEGER NOT NULL,
+            product_id INTEGER NOT NULL,
+            seller_id INTEGER NOT NULL,
+            quantity REAL NOT NULL,
+            price REAL NOT NULL,
+            subtotal REAL NOT NULL,
+            FOREIGN KEY (order_id) REFERENCES orders(id),
+            FOREIGN KEY (product_id) REFERENCES products(id),
+            FOREIGN KEY (seller_id) REFERENCES users(id)
+        )
+    """)
+
     conn.commit()
     conn.close()
 

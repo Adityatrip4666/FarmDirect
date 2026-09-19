@@ -34,6 +34,7 @@ def role_required(*allowed_roles):
 
     return decorator
 
+
 def get_cart():
     return session.get("cart", {})
 
@@ -366,7 +367,6 @@ def seller_profile(user_id):
     return render_template("seller_profile.html", user=user, profile=profile)
 
 
-
 @app.route("/marketplace")
 @role_required("consumer", "bulk_buyer")
 def marketplace():
@@ -425,6 +425,7 @@ def marketplace():
         location=location,
     )
 
+
 @app.route("/cart/add/<int:product_id>", methods=["POST"])
 @role_required("consumer")
 def add_to_cart(product_id):
@@ -474,17 +475,14 @@ def add_to_cart(product_id):
     flash("Product added to cart.", "success")
     return redirect(url_for("marketplace"))
 
+
 @app.route("/cart")
 @role_required("consumer")
 def cart():
     cart = get_cart()
 
     if not cart:
-        return render_template(
-            "cart.html",
-            cart_items=[],
-            total=0
-        )
+        return render_template("cart.html", cart_items=[], total=0)
 
     product_ids = list(cart.keys())
 
@@ -519,11 +517,204 @@ def cart():
             }
         )
 
-    return render_template(
-        "cart.html",
-        cart_items=cart_items,
-        total=total
-    )
+    return render_template("cart.html", cart_items=cart_items, total=total)
+
+
+@app.route("/orders/place", methods=["POST"])
+@role_required("consumer")
+def place_order():
+    cart = get_cart()
+
+    if not cart:
+        flash("Your cart is empty.", "error")
+        return redirect(url_for("cart"))
+
+    conn = get_db_connection()
+
+    try:
+        product_ids = list(cart.keys())
+        placeholders = ",".join("?" for _ in product_ids)
+
+        products = conn.execute(
+            f"""
+            SELECT id, name, seller_id, quantity, price, availability
+            FROM products
+            WHERE id IN ({placeholders})
+            """,
+            product_ids,
+        ).fetchall()
+
+        if len(products) != len(product_ids):
+            conn.rollback()
+            flash("One or more products are no longer available.", "error")
+            return redirect(url_for("cart"))
+
+        total_amount = 0
+        order_items = []
+
+        for product in products:
+            requested_quantity = int(cart[str(product["id"])])
+
+            if requested_quantity <= 0:
+                conn.rollback()
+                flash("Invalid product quantity.", "error")
+                return redirect(url_for("cart"))
+
+            if product["availability"] != "Available":
+                conn.rollback()
+                flash(f"{product['name']} is no longer available.", "error")
+                return redirect(url_for("cart"))
+
+            if requested_quantity > product["quantity"]:
+                conn.rollback()
+                flash(
+                    f"Only {product['quantity']} units of "
+                    f"{product['name']} are available.",
+                    "error",
+                )
+                return redirect(url_for("cart"))
+
+            subtotal = requested_quantity * product["price"]
+            total_amount += subtotal
+
+            order_items.append(
+                (
+                    product["id"],
+                    product["seller_id"],
+                    requested_quantity,
+                    product["price"],
+                    subtotal,
+                )
+            )
+
+        cursor = conn.execute(
+            """
+            INSERT INTO orders (buyer_id, total_amount, status)
+            VALUES (?, ?, ?)
+            """,
+            (
+                session["user_id"],
+                total_amount,
+                "Placed",
+            ),
+        )
+
+        order_id = cursor.lastrowid
+
+        for product_id, seller_id, quantity, price, subtotal in order_items:
+            conn.execute(
+                """
+                INSERT INTO order_items
+                (order_id, product_id, seller_id, quantity, price, subtotal)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    order_id,
+                    product_id,
+                    seller_id,
+                    quantity,
+                    price,
+                    subtotal,
+                ),
+            )
+
+            conn.execute(
+                """
+                UPDATE products
+                SET quantity = quantity - ?,
+                    availability = CASE
+                        WHEN quantity - ? <= 0 THEN 'Unavailable'
+                        ELSE 'Available'
+                    END,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                """,
+                (
+                    quantity,
+                    quantity,
+                    product_id,
+                ),
+            )
+
+        conn.commit()
+
+        session["cart"] = {}
+        session.modified = True
+
+        flash(f"Order #{order_id} placed successfully.", "success")
+
+        return redirect(url_for("order_history"))
+
+    except Exception:
+        conn.rollback()
+        flash("Unable to place the order. Please try again.", "error")
+        return redirect(url_for("cart"))
+
+    finally:
+        conn.close()
+
+
+@app.route("/orders")
+@role_required("consumer")
+def order_history():
+    conn = get_db_connection()
+
+    orders = conn.execute(
+        """
+        SELECT id, total_amount, status, created_at
+        FROM orders
+        WHERE buyer_id = ?
+        ORDER BY created_at DESC
+        """,
+        (session["user_id"],),
+    ).fetchall()
+
+    conn.close()
+
+    return render_template("orders.html", orders=orders)
+
+
+@app.route("/orders/<int:order_id>")
+@role_required("consumer")
+def order_details(order_id):
+    conn = get_db_connection()
+
+    order = conn.execute(
+        """
+        SELECT id, total_amount, status, created_at
+        FROM orders
+        WHERE id = ? AND buyer_id = ?
+        """,
+        (
+            order_id,
+            session["user_id"],
+        ),
+    ).fetchone()
+
+    if order is None:
+        conn.close()
+        flash("Order not found or you are not authorized to view it.", "error")
+        return redirect(url_for("order_history"))
+
+    items = conn.execute(
+        """
+        SELECT
+            order_items.quantity,
+            order_items.price,
+            order_items.subtotal,
+            products.name
+        FROM order_items
+        JOIN products
+            ON order_items.product_id = products.id
+        WHERE order_items.order_id = ?
+        """,
+        (order_id,),
+    ).fetchall()
+
+    conn.close()
+
+    return render_template("order_details.html", order=order, items=items)
+
 
 @app.route("/cart/update/<int:product_id>", methods=["POST"])
 @role_required("consumer")
@@ -570,6 +761,7 @@ def update_cart(product_id):
     flash("Cart updated successfully.", "success")
     return redirect(url_for("cart"))
 
+
 @app.route("/cart/remove/<int:product_id>", methods=["POST"])
 @role_required("consumer")
 def remove_from_cart(product_id):
@@ -582,6 +774,7 @@ def remove_from_cart(product_id):
 
     flash("Product removed from cart.", "success")
     return redirect(url_for("cart"))
+
 
 @app.route("/cart/clear", methods=["POST"])
 @role_required("consumer")
@@ -807,7 +1000,6 @@ def delete_product(product_id):
 
     flash("Product deleted successfully.", "success")
     return redirect(url_for("my_products"))
-
 
 
 if __name__ == "__main__":

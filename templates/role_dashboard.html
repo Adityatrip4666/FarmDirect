@@ -38,6 +38,13 @@
     </a>
 </p>
 
+<p>
+    <a href="{{ url_for('available_requirements') }}">
+        Bulk Buyer Requirements
+    </a>
+</p>
+
+
 {% endif %}
 
 {% if session.get('role') in ['consumer', 'bulk_buyer'] %}
@@ -45,6 +52,18 @@
 <p>
     <a href="{{ url_for('marketplace') }}">
         Browse Marketplace
+    </a>
+</p>
+
+<p>
+    <a href="{{ url_for('add_requirement') }}">
+        Create Bulk Requirement
+    </a>
+</p>
+
+<p>
+    <a href="{{ url_for('my_requirements') }}">
+        My Requirements
     </a>
 </p>
 

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>My Requirements - FarmDirect</title>
+</head>
+<body>
+
+    <h1>My Bulk Requirements</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+    {% endwith %}
+
+    <p>
+        <a href="{{ url_for('add_requirement') }}">
+            Create New Requirement
+        </a>
+    </p>
+
+    {% if requirements %}
+
+        {% for requirement in requirements %}
+
+            <hr>
+
+            <h2>{{ requirement["product_name"] }}</h2>
+
+            <p>
+                <strong>Category:</strong>
+                {{ requirement["category"] }}
+            </p>
+
+            <p>
+                <strong>Quantity:</strong>
+                {{ requirement["quantity"] }}
+            </p>
+
+            <p>
+                <strong>Target Price:</strong>
+                ₹{{ requirement["target_price"] }}
+            </p>
+
+            <p>
+                <strong>Delivery Location:</strong>
+                {{ requirement["delivery_location"] }}
+            </p>
+
+            <p>
+                <strong>Delivery Date:</strong>
+                {{ requirement["delivery_date"] }}
+            </p>
+
+            <p>
+                <strong>Status:</strong>
+                {{ requirement["status"] }}
+            </p>
+
+        {% endfor %}
+
+    {% else %}
+
+        <p>You have not created any bulk requirements yet.</p>
+
+    {% endif %}
+
+    <br>
+
+    <a href="{{ url_for('dashboard') }}">
+        Back to Dashboard
+    </a>
+
+</body>
+</html>

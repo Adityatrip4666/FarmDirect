@@ -34,6 +34,9 @@ def role_required(*allowed_roles):
 
     return decorator
 
+def get_cart():
+    return session.get("cart", {})
+
 
 app = Flask(__name__)
 
@@ -421,6 +424,173 @@ def marketplace():
         max_price=max_price,
         location=location,
     )
+
+@app.route("/cart/add/<int:product_id>", methods=["POST"])
+@role_required("consumer")
+def add_to_cart(product_id):
+    quantity = request.form.get("quantity", "1").strip()
+
+    try:
+        quantity = int(quantity)
+        if quantity <= 0:
+            raise ValueError
+    except ValueError:
+        flash("Quantity must be a positive whole number.", "error")
+        return redirect(url_for("marketplace"))
+
+    conn = get_db_connection()
+
+    product = conn.execute(
+        """
+        SELECT id, name, quantity, price, availability
+        FROM products
+        WHERE id = ? AND availability = 'Available'
+        """,
+        (product_id,),
+    ).fetchone()
+
+    conn.close()
+
+    if product is None:
+        flash("Product is not available.", "error")
+        return redirect(url_for("marketplace"))
+
+    cart = get_cart()
+
+    current_quantity = int(cart.get(str(product_id), 0))
+    new_quantity = current_quantity + quantity
+
+    if new_quantity > product["quantity"]:
+        flash(
+            f"Only {product['quantity']} units of {product['name']} are available.",
+            "error",
+        )
+        return redirect(url_for("marketplace"))
+
+    cart[str(product_id)] = new_quantity
+    session["cart"] = cart
+    session.modified = True
+
+    flash("Product added to cart.", "success")
+    return redirect(url_for("marketplace"))
+
+@app.route("/cart")
+@role_required("consumer")
+def cart():
+    cart = get_cart()
+
+    if not cart:
+        return render_template(
+            "cart.html",
+            cart_items=[],
+            total=0
+        )
+
+    product_ids = list(cart.keys())
+
+    placeholders = ",".join("?" for _ in product_ids)
+
+    conn = get_db_connection()
+
+    products = conn.execute(
+        f"""
+        SELECT id, name, category, quantity, price, location
+        FROM products
+        WHERE id IN ({placeholders})
+        """,
+        product_ids,
+    ).fetchall()
+
+    conn.close()
+
+    cart_items = []
+    total = 0
+
+    for product in products:
+        quantity = int(cart.get(str(product["id"]), 0))
+        subtotal = quantity * product["price"]
+        total += subtotal
+
+        cart_items.append(
+            {
+                "product": product,
+                "quantity": quantity,
+                "subtotal": subtotal,
+            }
+        )
+
+    return render_template(
+        "cart.html",
+        cart_items=cart_items,
+        total=total
+    )
+
+@app.route("/cart/update/<int:product_id>", methods=["POST"])
+@role_required("consumer")
+def update_cart(product_id):
+    quantity = request.form.get("quantity", "").strip()
+
+    try:
+        quantity = int(quantity)
+        if quantity <= 0:
+            raise ValueError
+    except ValueError:
+        flash("Quantity must be a positive whole number.", "error")
+        return redirect(url_for("cart"))
+
+    conn = get_db_connection()
+
+    product = conn.execute(
+        """
+        SELECT id, name, quantity, price, availability
+        FROM products
+        WHERE id = ?
+        """,
+        (product_id,),
+    ).fetchone()
+
+    conn.close()
+
+    if product is None or product["availability"] != "Available":
+        flash("Product is no longer available.", "error")
+        return redirect(url_for("cart"))
+
+    if quantity > product["quantity"]:
+        flash(
+            f"Only {product['quantity']} units of {product['name']} are available.",
+            "error",
+        )
+        return redirect(url_for("cart"))
+
+    cart = get_cart()
+    cart[str(product_id)] = quantity
+    session["cart"] = cart
+    session.modified = True
+
+    flash("Cart updated successfully.", "success")
+    return redirect(url_for("cart"))
+
+@app.route("/cart/remove/<int:product_id>", methods=["POST"])
+@role_required("consumer")
+def remove_from_cart(product_id):
+    cart = get_cart()
+
+    cart.pop(str(product_id), None)
+
+    session["cart"] = cart
+    session.modified = True
+
+    flash("Product removed from cart.", "success")
+    return redirect(url_for("cart"))
+
+@app.route("/cart/clear", methods=["POST"])
+@role_required("consumer")
+def clear_cart():
+    session["cart"] = {}
+    session.modified = True
+
+    flash("Cart cleared.", "success")
+    return redirect(url_for("cart"))
 
 
 @app.route("/products/add", methods=["GET", "POST"])

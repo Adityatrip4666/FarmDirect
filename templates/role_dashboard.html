@@ -20,33 +20,43 @@
 
 {% if session.get('role') in ['farmer', 'fpo'] %}
 
-<p>
-    <a href="{{ url_for('profile') }}">
-        My Profile
-    </a>
-</p>
+    <p>
+        <a href="{{ url_for('profile') }}">
+            My Profile
+        </a>
+    </p>
 
-<p>
-    <a href="{{ url_for('my_products') }}">
-        My Products
-    </a>
-</p>
+    <p>
+        <a href="{{ url_for('my_products') }}">
+            My Products
+        </a>
+    </p>
 
-<p>
-    <a href="{{ url_for('add_product') }}">
-        Add Product
-    </a>
-</p>
+    <p>
+        <a href="{{ url_for('add_product') }}">
+            Add Product
+        </a>
+    </p>
 
 {% endif %}
 
 {% if session.get('role') in ['consumer', 'bulk_buyer'] %}
 
-<p>
-    <a href="{{ url_for('marketplace') }}">
-        Browse Marketplace
-    </a>
-</p>
+    <p>
+        <a href="{{ url_for('marketplace') }}">
+            Browse Marketplace
+        </a>
+    </p>
+
+{% endif %}
+
+{% if session.get('role') == 'consumer' %}
+
+    <p>
+        <a href="{{ url_for('cart') }}">
+            Shopping Cart
+        </a>
+    </p>
 
 {% endif %}
 

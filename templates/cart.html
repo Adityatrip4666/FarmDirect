@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Shopping Cart - FarmDirect</title>
+</head>
+
+<body>
+
+    <h1>Shopping Cart</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+    <p>{{ message }}</p>
+    {% endfor %}
+    {% endwith %}
+
+    {% if cart_items %}
+
+    {% for item in cart_items %}
+
+    <hr>
+
+    <h2>{{ item["product"]["name"] }}</h2>
+
+    <p>
+        <strong>Category:</strong>
+        {{ item["product"]["category"] }}
+    </p>
+
+    <p>
+        <strong>Price:</strong>
+        ₹{{ item["product"]["price"] }}
+    </p>
+
+    <p>
+        <strong>Available:</strong>
+        {{ item["product"]["quantity"] }}
+    </p>
+
+    <p>
+        <strong>Subtotal:</strong>
+        ₹{{ item["subtotal"] }}
+    </p>
+
+    <form method="POST" action="{{ url_for('update_cart', product_id=item['product']['id']) }}">
+        <label for="quantity-{{ item['product']['id'] }}">
+            Quantity:
+        </label>
+
+        <input type="number" id="quantity-{{ item['product']['id'] }}" name="quantity" min="1"
+            max="{{ item['product']['quantity'] }}" value="{{ item['quantity'] }}" required>
+
+        <button type="submit">
+            Update
+        </button>
+    </form>
+
+    <br>
+
+    <form method="POST" action="{{ url_for('remove_from_cart', product_id=item['product']['id']) }}">
+        <button type="submit">
+            Remove
+        </button>
+    </form>
+
+    {% endfor %}
+
+    <hr>
+
+    <h2>Total: ₹{{ total }}</h2>
+
+    <form method="POST" action="{{ url_for('clear_cart') }}">
+        <button type="submit">
+            Clear Cart
+        </button>
+    </form>
+
+    {% else %}
+
+    <p>Your cart is empty.</p>
+
+    {% endif %}
+
+    <br>
+
+    <a href="{{ url_for('marketplace') }}">
+        Continue Shopping
+    </a>
+
+    <br><br>
+
+    <a href="{{ url_for('dashboard') }}">
+        Back to Dashboard
+    </a>
+
+</body>
+
+</html>

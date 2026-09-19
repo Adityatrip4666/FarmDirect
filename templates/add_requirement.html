@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Create Bulk Requirement - FarmDirect</title>
+</head>
+<body>
+
+    <h1>Create Bulk Requirement</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+    {% endwith %}
+
+    <form method="POST">
+
+        <p>
+            <label>Product Name:</label><br>
+            <input type="text" name="product_name" required>
+        </p>
+
+        <p>
+            <label>Category:</label><br>
+            <input type="text" name="category" required>
+        </p>
+
+        <p>
+            <label>Required Quantity:</label><br>
+            <input type="number" name="quantity" min="0.01" step="0.01" required>
+        </p>
+
+        <p>
+            <label>Target Price:</label><br>
+            <input type="number" name="target_price" min="0.01" step="0.01" required>
+        </p>
+
+        <p>
+            <label>Delivery Location:</label><br>
+            <input type="text" name="delivery_location" required>
+        </p>
+
+        <p>
+            <label>Delivery Date:</label><br>
+            <input type="date" name="delivery_date" required>
+        </p>
+
+        <button type="submit">Create Requirement</button>
+
+    </form>
+
+    <br>
+
+    <a href="{{ url_for('my_requirements') }}">
+        My Requirements
+    </a>
+
+    <br><br>
+
+    <a href="{{ url_for('dashboard') }}">
+        Back to Dashboard
+    </a>
+
+</body>
+</html>

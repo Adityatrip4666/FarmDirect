@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>User Administration</h2>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+        <p>{{ message }}</p>
+    {% endfor %}
+{% endwith %}
+
+<table border="1" cellpadding="6">
+
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Joined</th>
+        <th>Action</th>
+    </tr>
+
+    {% for user in users %}
+
+    <tr>
+
+        <td>{{ user["id"] }}</td>
+
+        <td>{{ user["name"] }}</td>
+
+        <td>{{ user["email"] }}</td>
+
+        <td>{{ user["role"] }}</td>
+
+        <td>{{ user["created_at"] }}</td>
+
+        <td>
+
+            {% if user["role"] != "admin" %}
+
+            <form
+                method="POST"
+                action="{{ url_for('deactivate_user', user_id=user['id']) }}"
+            >
+                <button type="submit">
+                    Deactivate
+                </button>
+            </form>
+
+            {% else %}
+
+            Admin account
+
+            {% endif %}
+
+        </td>
+
+    </tr>
+
+    {% endfor %}
+
+</table>
+
+<br>
+
+<a href="{{ url_for('admin_dashboard') }}">
+    Back to Admin Dashboard
+</a>
+
+{% endblock %}

@@ -715,6 +715,7 @@ def order_details(order_id):
 
     return render_template("order_details.html", order=order, items=items)
 
+
 @app.route("/requirements/add", methods=["GET", "POST"])
 @role_required("bulk_buyer")
 def add_requirement():
@@ -787,6 +788,7 @@ def add_requirement():
 
     return render_template("add_requirement.html")
 
+
 @app.route("/requirements")
 @role_required("bulk_buyer")
 def my_requirements():
@@ -813,10 +815,8 @@ def my_requirements():
 
     conn.close()
 
-    return render_template(
-        "requirements.html",
-        requirements=requirements
-    )
+    return render_template("requirements.html", requirements=requirements)
+
 
 @app.route("/requirements/available")
 @role_required("farmer", "fpo")
@@ -845,10 +845,196 @@ def available_requirements():
 
     conn.close()
 
-    return render_template(
-        "available_requirements.html",
-        requirements=requirements
+    return render_template("available_requirements.html", requirements=requirements)
+
+
+@app.route("/requirements/<int:requirement_id>/offers")
+@role_required("bulk_buyer")
+def requirement_offers(requirement_id):
+    conn = get_db_connection()
+
+    requirement = conn.execute(
+        """
+        SELECT
+            id,
+            product_name,
+            category,
+            quantity,
+            target_price,
+            delivery_location,
+            delivery_date,
+            status
+        FROM bulk_requirements
+        WHERE id = ? AND buyer_id = ?
+        """,
+        (requirement_id, session["user_id"]),
+    ).fetchone()
+
+    if requirement is None:
+        conn.close()
+        flash("Requirement not found or you are not authorized to view it.", "error")
+        return redirect(url_for("my_requirements"))
+
+    offers = conn.execute(
+        """
+        SELECT
+            offers.id,
+            offers.quantity,
+            offers.price,
+            offers.status,
+            offers.created_at,
+            users.name AS seller_name,
+            users.role AS seller_role
+        FROM offers
+        JOIN users
+            ON offers.seller_id = users.id
+        WHERE offers.requirement_id = ?
+        ORDER BY offers.created_at DESC
+        """,
+        (requirement_id,),
+    ).fetchall()
+
+    conn.close()
+
+    return render_template("offers.html", requirement=requirement, offers=offers)
+
+
+@app.route("/offers/<int:offer_id>/<status>", methods=["POST"])
+@role_required("bulk_buyer")
+def update_offer_status(offer_id, status):
+
+    if status not in ("Accepted", "Rejected"):
+        flash("Invalid offer status.", "error")
+        return redirect(url_for("my_requirements"))
+
+    conn = get_db_connection()
+
+    offer = conn.execute(
+        """
+        SELECT
+            offers.id,
+            offers.requirement_id
+        FROM offers
+        JOIN bulk_requirements
+            ON offers.requirement_id = bulk_requirements.id
+        WHERE offers.id = ?
+        AND bulk_requirements.buyer_id = ?
+        """,
+        (offer_id, session["user_id"]),
+    ).fetchone()
+
+    if offer is None:
+        conn.close()
+        flash("Offer not found or you are not authorized.", "error")
+        return redirect(url_for("my_requirements"))
+
+    conn.execute(
+        """
+        UPDATE offers
+        SET status = ?,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+        """,
+        (status, offer_id),
     )
+
+    conn.commit()
+    conn.close()
+
+    flash(f"Offer {status.lower()} successfully.", "success")
+
+    return redirect(
+        url_for("requirement_offers", requirement_id=offer["requirement_id"])
+    )
+
+
+@app.route("/requirements/<int:requirement_id>/offer", methods=["GET", "POST"])
+@role_required("farmer", "fpo")
+def submit_offer(requirement_id):
+    conn = get_db_connection()
+
+    requirement = conn.execute(
+        """
+        SELECT
+            id,
+            product_name,
+            category,
+            quantity,
+            target_price,
+            delivery_location,
+            delivery_date,
+            status
+        FROM bulk_requirements
+        WHERE id = ? AND status = 'Open'
+        """,
+        (requirement_id,),
+    ).fetchone()
+
+    if requirement is None:
+        conn.close()
+        flash("Requirement not found or no longer open.", "error")
+        return redirect(url_for("available_requirements"))
+
+    if request.method == "POST":
+        quantity = request.form.get("quantity", "").strip()
+        price = request.form.get("price", "").strip()
+
+        try:
+            quantity = float(quantity)
+
+            if quantity <= 0:
+                raise ValueError
+        except ValueError:
+            conn.close()
+            flash("Offer quantity must be greater than 0.", "error")
+            return render_template("submit_offer.html", requirement=requirement)
+
+        try:
+            price = float(price)
+
+            if price <= 0:
+                raise ValueError
+        except ValueError:
+            conn.close()
+            flash("Offer price must be greater than 0.", "error")
+            return render_template("submit_offer.html", requirement=requirement)
+
+        if quantity > requirement["quantity"]:
+            conn.close()
+            flash("Offer quantity cannot exceed the required quantity.", "error")
+            return render_template("submit_offer.html", requirement=requirement)
+
+        conn.execute(
+            """
+            INSERT INTO offers
+            (
+                requirement_id,
+                seller_id,
+                quantity,
+                price,
+                status
+            )
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                requirement_id,
+                session["user_id"],
+                quantity,
+                price,
+                "Pending",
+            ),
+        )
+
+        conn.commit()
+        conn.close()
+
+        flash("Offer submitted successfully.", "success")
+        return redirect(url_for("available_requirements"))
+
+    conn.close()
+
+    return render_template("submit_offer.html", requirement=requirement)
+
 
 @app.route("/cart/update/<int:product_id>", methods=["POST"])
 @role_required("consumer")

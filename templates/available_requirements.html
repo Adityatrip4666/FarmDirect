@@ -56,6 +56,12 @@
                 <strong>Status:</strong>
                 {{ requirement["status"] }}
             </p>
+      
+            <p>
+               <a href="{{ url_for('submit_offer', requirement_id=requirement['id']) }}">
+                     Submit Offer
+                </a>
+            </p>
 
         {% endfor %}
 

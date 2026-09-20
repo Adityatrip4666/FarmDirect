@@ -1,7 +1,15 @@
 ﻿__pycache__/
 *.pyc
+.pytest_cache/
+*.pyo
+*.pyd
+
 farmdirect.db
 instance/
+
 .env
+.env.*
+!.env.example
+
 .venv/
 venv/

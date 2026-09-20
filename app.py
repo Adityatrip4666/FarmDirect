@@ -715,6 +715,140 @@ def order_details(order_id):
 
     return render_template("order_details.html", order=order, items=items)
 
+@app.route("/requirements/add", methods=["GET", "POST"])
+@role_required("bulk_buyer")
+def add_requirement():
+    if request.method == "POST":
+        product_name = request.form.get("product_name", "").strip()
+        category = request.form.get("category", "").strip()
+        quantity = request.form.get("quantity", "").strip()
+        target_price = request.form.get("target_price", "").strip()
+        delivery_location = request.form.get("delivery_location", "").strip()
+        delivery_date = request.form.get("delivery_date", "").strip()
+
+        if not product_name or not category:
+            flash("Product name and category are required.", "error")
+            return render_template("add_requirement.html")
+
+        if not delivery_location or not delivery_date:
+            flash("Delivery location and date are required.", "error")
+            return render_template("add_requirement.html")
+
+        try:
+            quantity = float(quantity)
+            if quantity <= 0:
+                raise ValueError
+        except ValueError:
+            flash("Quantity must be greater than 0.", "error")
+            return render_template("add_requirement.html")
+
+        try:
+            target_price = float(target_price)
+            if target_price <= 0:
+                raise ValueError
+        except ValueError:
+            flash("Target price must be greater than 0.", "error")
+            return render_template("add_requirement.html")
+
+        conn = get_db_connection()
+
+        conn.execute(
+            """
+            INSERT INTO bulk_requirements
+            (
+                buyer_id,
+                product_name,
+                category,
+                quantity,
+                target_price,
+                delivery_location,
+                delivery_date,
+                status
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                session["user_id"],
+                product_name,
+                category,
+                quantity,
+                target_price,
+                delivery_location,
+                delivery_date,
+                "Open",
+            ),
+        )
+
+        conn.commit()
+        conn.close()
+
+        flash("Bulk requirement created successfully.", "success")
+        return redirect(url_for("my_requirements"))
+
+    return render_template("add_requirement.html")
+
+@app.route("/requirements")
+@role_required("bulk_buyer")
+def my_requirements():
+    conn = get_db_connection()
+
+    requirements = conn.execute(
+        """
+        SELECT
+            id,
+            product_name,
+            category,
+            quantity,
+            target_price,
+            delivery_location,
+            delivery_date,
+            status,
+            created_at
+        FROM bulk_requirements
+        WHERE buyer_id = ?
+        ORDER BY created_at DESC
+        """,
+        (session["user_id"],),
+    ).fetchall()
+
+    conn.close()
+
+    return render_template(
+        "requirements.html",
+        requirements=requirements
+    )
+
+@app.route("/requirements/available")
+@role_required("farmer", "fpo")
+def available_requirements():
+    conn = get_db_connection()
+
+    requirements = conn.execute(
+        """
+        SELECT
+            bulk_requirements.id,
+            bulk_requirements.product_name,
+            bulk_requirements.category,
+            bulk_requirements.quantity,
+            bulk_requirements.target_price,
+            bulk_requirements.delivery_location,
+            bulk_requirements.delivery_date,
+            bulk_requirements.status,
+            users.name AS buyer_name
+        FROM bulk_requirements
+        JOIN users
+            ON bulk_requirements.buyer_id = users.id
+        WHERE bulk_requirements.status = 'Open'
+        ORDER BY bulk_requirements.created_at DESC
+        """
+    ).fetchall()
+
+    conn.close()
+
+    return render_template(
+        "available_requirements.html",
+        requirements=requirements
+    )
 
 @app.route("/cart/update/<int:product_id>", methods=["POST"])
 @role_required("consumer")

@@ -202,22 +202,69 @@ def consumer_dashboard():
 def bulk_buyer_dashboard():
     return render_template("role_dashboard.html", role_label="Bulk Buyer")
 
-
 @app.route("/admin/dashboard")
 @role_required("admin")
 def admin_dashboard():
     conn = get_db_connection()
 
-    users = conn.execute(
+    total_users = conn.execute(
+        "SELECT COUNT(*) AS count FROM users"
+    ).fetchone()["count"]
+
+    total_farmers = conn.execute(
+        "SELECT COUNT(*) AS count FROM users WHERE role = 'farmer'"
+    ).fetchone()["count"]
+
+    total_fpo = conn.execute(
+        "SELECT COUNT(*) AS count FROM users WHERE role = 'fpo'"
+    ).fetchone()["count"]
+
+    total_consumers = conn.execute(
+        "SELECT COUNT(*) AS count FROM users WHERE role = 'consumer'"
+    ).fetchone()["count"]
+
+    total_bulk_buyers = conn.execute(
+        "SELECT COUNT(*) AS count FROM users WHERE role = 'bulk_buyer'"
+    ).fetchone()["count"]
+
+    total_products = conn.execute(
+        "SELECT COUNT(*) AS count FROM products"
+    ).fetchone()["count"]
+
+    total_orders = conn.execute(
+        "SELECT COUNT(*) AS count FROM orders"
+    ).fetchone()["count"]
+
+    open_requirements = conn.execute(
         """
-        SELECT id, name, email, role, created_at
-        FROM users
+        SELECT COUNT(*) AS count
+        FROM bulk_requirements
+        WHERE status = 'Open'
         """
-    ).fetchall()
+    ).fetchone()["count"]
+
+    pending_offers = conn.execute(
+        """
+        SELECT COUNT(*) AS count
+        FROM offers
+        WHERE status = 'Pending'
+        """
+    ).fetchone()["count"]
 
     conn.close()
 
-    return render_template("admin_dashboard.html", users=users)
+    return render_template(
+        "admin_dashboard.html",
+        total_users=total_users,
+        total_farmers=total_farmers,
+        total_fpo=total_fpo,
+        total_consumers=total_consumers,
+        total_bulk_buyers=total_bulk_buyers,
+        total_products=total_products,
+        total_orders=total_orders,
+        open_requirements=open_requirements,
+        pending_offers=pending_offers,
+    )
 
 
 @app.route("/user/<int:user_id>/account")

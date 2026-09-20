@@ -124,14 +124,26 @@ def login():
 
         conn = get_db_connection()
 
-        user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
-
-        conn.close()
+        user = conn.execute(
+            "SELECT * FROM users WHERE email = ?",
+            (email,)
+        ).fetchone()
 
         # Invalid credentials
-        if user is None or not check_password_hash(user["password_hash"], password):
+        if user is None or not check_password_hash(
+            user["password_hash"], password
+        ):
+            conn.close()
             flash("Invalid email or password.", "error")
             return render_template("login.html")
+
+        # Check whether the account is active
+        if user["status"] != "Active":
+            conn.close()
+            flash("Your account is inactive.", "error")
+            return render_template("login.html")
+
+        conn.close()
 
         # Clear old session and create new authenticated session
         session.clear()
@@ -266,6 +278,132 @@ def admin_dashboard():
         pending_offers=pending_offers,
     )
 
+@app.route("/admin/users")
+@role_required("admin")
+def admin_users():
+    conn = get_db_connection()
+
+    users = conn.execute(
+        """
+        SELECT
+            id,
+            name,
+            email,
+            role,
+            created_at
+        FROM users
+        ORDER BY created_at DESC
+        """
+    ).fetchall()
+
+    conn.close()
+
+    return render_template(
+        "admin_users.html",
+        users=users
+    )
+
+@app.route("/admin/users/<int:user_id>/deactivate", methods=["POST"])
+@role_required("admin")
+def deactivate_user(user_id):
+    conn = get_db_connection()
+
+    user = conn.execute(
+        """
+        SELECT id, role
+        FROM users
+        WHERE id = ?
+        """,
+        (user_id,),
+    ).fetchone()
+
+    if user is None:
+        conn.close()
+        flash("User not found.", "error")
+        return redirect(url_for("admin_users"))
+
+    if user["role"] == "admin":
+        conn.close()
+        flash("Admin accounts cannot be deactivated.", "error")
+        return redirect(url_for("admin_users"))
+
+    conn.execute(
+        """
+        UPDATE users
+        SET status = 'Inactive'
+        WHERE id = ?
+        """,
+        (user_id,),
+    )
+
+    conn.commit()
+    conn.close()
+
+    flash("User deactivated successfully.", "success")
+    return redirect(url_for("admin_users"))
+
+@app.route("/admin/products")
+@role_required("admin")
+def admin_products():
+    conn = get_db_connection()
+
+    products = conn.execute(
+        """
+        SELECT
+            products.id,
+            products.name,
+            products.category,
+            products.quantity,
+            products.price,
+            products.location,
+            products.availability,
+            users.name AS seller_name
+        FROM products
+        JOIN users
+            ON products.seller_id = users.id
+        ORDER BY products.created_at DESC
+        """
+    ).fetchall()
+
+    conn.close()
+
+    return render_template(
+        "admin_products.html",
+        products=products
+    )
+
+@app.route("/admin/products/<int:product_id>/delete", methods=["POST"])
+@role_required("admin")
+def delete_admin_product(product_id):
+    conn = get_db_connection()
+
+    product = conn.execute(
+        """
+        SELECT id
+        FROM products
+        WHERE id = ?
+        """,
+        (product_id,),
+    ).fetchone()
+
+    if product is None:
+        conn.close()
+        flash("Product not found.", "error")
+        return redirect(url_for("admin_products"))
+
+    conn.execute(
+        """
+        DELETE FROM products
+        WHERE id = ?
+        """,
+        (product_id,),
+    )
+
+    conn.commit()
+    conn.close()
+
+    flash("Product removed successfully.", "success")
+    return redirect(url_for("admin_products"))
 
 @app.route("/user/<int:user_id>/account")
 @login_required

@@ -20,6 +20,7 @@ def init_db():
             email TEXT NOT NULL UNIQUE,
             password_hash TEXT NOT NULL,
             role TEXT NOT NULL CHECK(role IN ('farmer','fpo','consumer','bulk_buyer','admin')),
+            status TEXT NOT NULL DEFAULT 'Active',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
@@ -88,6 +89,53 @@ def init_db():
             FOREIGN KEY (seller_id) REFERENCES users(id)
         )
     """)
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS bulk_requirements (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            buyer_id INTEGER NOT NULL,
+            product_name TEXT NOT NULL,
+            category TEXT NOT NULL,
+            quantity REAL NOT NULL,
+            target_price REAL NOT NULL,
+            delivery_location TEXT NOT NULL,
+            delivery_date TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'Open',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (buyer_id) REFERENCES users(id)
+        )
+    """)
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS offers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            requirement_id INTEGER NOT NULL,
+            seller_id INTEGER NOT NULL,
+            quantity REAL NOT NULL,
+            price REAL NOT NULL,
+            status TEXT NOT NULL DEFAULT 'Pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (requirement_id) REFERENCES bulk_requirements(id),
+            FOREIGN KEY (seller_id) REFERENCES users(id)
+        )
+    """)
+
+    # Add status to existing users table if it does not already exist.
+    columns = conn.execute(
+        "PRAGMA table_info(users)"
+    ).fetchall()
+
+    column_names = [column["name"] for column in columns]
+
+    if "status" not in column_names:
+        conn.execute(
+            """
+            ALTER TABLE users
+            ADD COLUMN status TEXT NOT NULL DEFAULT 'Active'
+            """
+        )
 
     conn.commit()
     conn.close()

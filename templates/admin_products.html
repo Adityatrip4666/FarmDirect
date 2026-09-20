@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Product Administration</h2>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+        <p>{{ message }}</p>
+    {% endfor %}
+{% endwith %}
+
+<table border="1" cellpadding="6">
+    <tr>
+        <th>ID</th>
+        <th>Product</th>
+        <th>Category</th>
+        <th>Seller</th>
+        <th>Quantity</th>
+        <th>Price</th>
+        <th>Location</th>
+        <th>Availability</th>
+        <th>Action</th>
+    </tr>
+
+    {% for product in products %}
+    <tr>
+        <td>{{ product["id"] }}</td>
+        <td>{{ product["name"] }}</td>
+        <td>{{ product["category"] }}</td>
+        <td>{{ product["seller_name"] }}</td>
+        <td>{{ product["quantity"] }}</td>
+        <td>₹{{ product["price"] }}</td>
+        <td>{{ product["location"] }}</td>
+        <td>{{ product["availability"] }}</td>
+        <td>
+            <form method="POST"
+                  action="{{ url_for('delete_admin_product', product_id=product['id']) }}">
+                <button type="submit">Remove Product</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<br>
+
+<a href="{{ url_for('admin_dashboard') }}">
+    Back to Admin Dashboard
+</a>
+
+{% endblock %}

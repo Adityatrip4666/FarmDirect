@@ -1,17 +1,70 @@
 {% extends "base.html" %}
+
 {% block content %}
+
 <h2>Administrator Dashboard</h2>
-<p>Registered users:</p>
+
+<h3>Marketplace Overview</h3>
+
 <table border="1" cellpadding="6">
-    <tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Joined</th></tr>
-    {% for u in users %}
     <tr>
-        <td>{{ u.id }}</td>
-        <td>{{ u.name }}</td>
-        <td>{{ u.email }}</td>
-        <td>{{ u.role }}</td>
-        <td>{{ u.created_at }}</td>
+        <th>Metric</th>
+        <th>Total</th>
     </tr>
-    {% endfor %}
+
+    <tr>
+        <td>Registered Users</td>
+        <td>{{ total_users }}</td>
+    </tr>
+
+    <tr>
+        <td>Farmers</td>
+        <td>{{ total_farmers }}</td>
+    </tr>
+
+    <tr>
+        <td>FPOs</td>
+        <td>{{ total_fpo }}</td>
+    </tr>
+
+    <tr>
+        <td>Consumers</td>
+        <td>{{ total_consumers }}</td>
+    </tr>
+
+    <tr>
+        <td>Bulk Buyers</td>
+        <td>{{ total_bulk_buyers }}</td>
+    </tr>
+
+    <tr>
+        <td>Products</td>
+        <td>{{ total_products }}</td>
+    </tr>
+
+    <tr>
+        <td>Orders</td>
+        <td>{{ total_orders }}</td>
+    </tr>
 </table>
+
+<h3>Pending Marketplace Actions</h3>
+
+<table border="1" cellpadding="6">
+    <tr>
+        <th>Action</th>
+        <th>Total</th>
+    </tr>
+
+    <tr>
+        <td>Open Bulk Requirements</td>
+        <td>{{ open_requirements }}</td>
+    </tr>
+
+    <tr>
+        <td>Pending Offers</td>
+        <td>{{ pending_offers }}</td>
+    </tr>
+</table>
+
 {% endblock %}

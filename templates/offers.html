@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Offers - FarmDirect</title>
+</head>
+<body>
+
+    <h1>Offers for {{ requirement["product_name"] }}</h1>
+
+    <p>
+        <strong>Required Quantity:</strong>
+        {{ requirement["quantity"] }}
+    </p>
+
+    <p>
+        <strong>Target Price:</strong>
+        ₹{{ requirement["target_price"] }}
+    </p>
+
+    <hr>
+
+    {% if offers %}
+
+        {% for offer in offers %}
+
+            <h2>Offer #{{ offer["id"] }}</h2>
+
+            <p>
+                <strong>Seller:</strong>
+                {{ offer["seller_name"] }}
+            </p>
+
+            <p>
+                <strong>Seller Role:</strong>
+                {{ offer["seller_role"] }}
+            </p>
+
+            <p>
+                <strong>Quantity:</strong>
+                {{ offer["quantity"] }}
+            </p>
+
+            <p>
+                <strong>Price:</strong>
+                ₹{{ offer["price"] }}
+            </p>
+
+            <p>
+                <strong>Status:</strong>
+                {{ offer["status"] }}
+            </p>
+
+            {% if offer["status"] == "Pending" %}
+
+                <form method="POST"
+                      action="{{ url_for('update_offer_status', offer_id=offer['id'], status='Accepted') }}">
+                    <button type="submit">
+                        Accept
+                    </button>
+                </form>
+
+                <form method="POST"
+                      action="{{ url_for('update_offer_status', offer_id=offer['id'], status='Rejected') }}">
+                    <button type="submit">
+                        Reject
+                    </button>
+                </form>
+
+            {% endif %}
+
+            <hr>
+
+        {% endfor %}
+
+    {% else %}
+
+        <p>No offers have been submitted yet.</p>
+
+    {% endif %}
+
+    <br>
+
+    <a href="{{ url_for('my_requirements') }}">
+        Back to My Requirements
+    </a>
+
+</body>
+</html>

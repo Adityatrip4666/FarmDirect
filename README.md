@@ -563,6 +563,19 @@ Deployment
    ↓
 Maintenance
 ```
+
+## Production Configuration
+
+FarmDirect uses the `SECRET_KEY` environment variable for Flask session security.
+
+Before running the application in a production environment, configure a secure secret key.
+
+### Windows PowerShell
+
+```powershell
+$env:SECRET_KEY="your-secure-secret-key"
+python app.py
+
 ## How Ai can be used 
 
                          FarmDirect

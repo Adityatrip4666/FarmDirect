@@ -41,7 +41,10 @@ def get_cart():
 
 app = Flask(__name__)
 
-app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key-change-this")
+app.secret_key = os.environ.get("SECRET_KEY")
+
+if not app.secret_key:
+    app.secret_key = "development-only-secret-key"
 
 VALID_ROLES = ["farmer", "fpo", "consumer", "bulk_buyer"]
 

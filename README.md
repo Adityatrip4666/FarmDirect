@@ -1,691 +1,288 @@
-# FarmDirect — Direct Farmer-to-Buyer Marketplace
+# FarmDirect — Direct Farmer-to-Buyer Agricultural Marketplace
+
+FarmDirect is a web-based agricultural marketplace that connects farmers and
+Farmer Producer Organizations (FPOs) directly with consumers and bulk buyers.
+
+The system allows sellers to list agricultural products, buyers to search and
+purchase products, bulk buyers to post requirements and receive offers, and
+administrators to manage the platform.
 
 ## 1. Project Overview
 
-**FarmDirect** is a web-based digital marketplace designed to connect farmers and Farmer Producer Organizations (FPOs) directly with consumers and bulk buyers.
+FarmDirect aims to provide a simple digital marketplace for direct
+farmer-to-buyer transactions.
 
-The platform aims to reduce unnecessary intermediaries in the agricultural supply chain, helping farmers receive better prices while providing consumers and bulk buyers with easier access to agricultural products.
+The application is developed using:
 
-The project is developed using **Python, Flask, HTML, CSS, and SQLite**.
-
----
+- Python
+- Flask
+- HTML5
+- CSS3
+- Jinja2
+- SQLite
+- Git/GitHub
+- Pytest
 
 ## 2. Problem Statement
 
-Multiple intermediaries are involved in the traditional agricultural supply chain. This can reduce the earnings received by farmers while increasing the final price paid by consumers.
+Traditional agricultural supply chains can involve multiple intermediaries
+between producers and buyers.
 
-FarmDirect addresses this problem by providing a digital platform where farmers/FPOs can list their products and connect directly with consumers and bulk buyers.
+FarmDirect provides a digital platform where farmers/FPOs can list products
+and connect directly with consumers and bulk buyers.
 
----
+## 3. Objectives
 
-## 3. Project Objectives
+The main objectives are:
 
-The main objectives of FarmDirect are:
+- Connect farmers/FPOs with consumers and bulk buyers.
+- Allow farmers/FPOs to manage agricultural product listings.
+- Provide product search and filtering.
+- Provide shopping cart and order functionality.
+- Support bulk buyer requirements and seller offers.
+- Provide reviews and ratings.
+- Provide user notifications.
+- Provide role-based access control.
+- Provide an administrator dashboard.
+- Provide an AI-assisted agricultural price suggestion feature.
+- Maintain secure authentication and database operations.
 
-* Connect farmers/FPOs directly with consumers and bulk buyers.
-* Allow farmers to list and manage their agricultural products.
-* Provide consumers with an easy way to discover and purchase produce.
-* Enable bulk buyers to find products in larger quantities.
-* Reduce unnecessary intermediaries in the supply chain.
-* Provide basic order and delivery management.
-* Improve transparency between farmers and buyers.
+## 4. User Roles
 
----
+### Farmer / FPO
 
-## 4. Target Users
+Farmers and FPOs can:
 
-### Farmers / FPOs
+- Register and log in.
+- Manage their profiles.
+- Add agricultural products.
+- Edit their own products.
+- Delete their own products.
+- View their products.
+- Receive notifications.
+- Manage incoming orders.
+- Respond to bulk buyer requirements.
+- View offer status notifications.
+- Request AI-assisted price suggestions.
 
-Farmers and FPOs can use the platform to:
-
-* Create and manage their profiles.
-* List agricultural products.
-* Specify quantity, price, location, and availability.
-* Manage available stock.
-* View incoming orders.
-* Accept or reject orders.
-* Update order status.
-
-### Consumers
+### Consumer
 
 Consumers can:
 
-* Create an account.
-* Browse available agricultural products.
-* Search and filter products.
-* View product and farmer information.
-* Add products to a cart.
-* Place orders.
-* View order history.
-* Track order status.
+- Register and log in.
+- Browse the marketplace.
+- Search and filter products.
+- Add products to a cart.
+- Update cart quantities.
+- Place orders.
+- View order history.
+- View order details.
+- Review purchased products.
+- Rate products from 1 to 5.
+- View product ratings and reviews.
+- View notifications.
 
-### Bulk Buyers
+### Bulk Buyer
 
-Bulk buyers such as retailers, restaurants, hotels, and food businesses can:
+Bulk buyers can:
 
-* Search for agricultural products.
-* Find products available in larger quantities.
-* View farmer/FPO information.
-* Place bulk orders.
-* Track their orders.
+- Register and log in.
+- Browse the marketplace.
+- Search for products.
+- Create bulk requirements.
+- Specify required quantity and maximum price.
+- Receive offers from farmers/FPOs.
+- Accept or reject offers.
+- View relevant notifications.
 
 ### Administrator
 
-The administrator manages the overall platform and can:
+Administrators can:
 
-* Manage users.
-* Manage product listings.
-* Monitor orders.
-* Manage delivery information.
-* View basic marketplace statistics.
+- Access the administrator dashboard.
+- View marketplace statistics.
+- Manage users.
+- Activate/deactivate user accounts.
+- Manage product listings.
+- Monitor platform activity.
 
----
+## 5. Main Features
 
-## 5. Core Features
+### Authentication
 
-### User Authentication
+- User registration
+- User login
+- User logout
+- Password hashing
+- Session management
+- Inactive-account protection
 
-* User registration and login.
-* Role-based access.
-* Separate dashboards for different user types.
-* Secure password handling.
+Administrators are not available through normal public registration.
+
+### Role-Based Access Control
+
+The application restricts functionality according to user role.
+
+Examples:
+
+- Consumers cannot manage farmer products.
+- Farmers/FPOs cannot access consumer cart functionality.
+- Non-admin users cannot access administrator functions.
+- Sellers can only modify their own products.
+- Users can only access their own notifications.
 
 ### Product Management
 
 Farmers/FPOs can create product listings containing:
 
-* Product name
-* Category
-* Quantity
-* Price
-* Location
-* Harvest date
-* Availability
+- Product name
+- Category
+- Quantity
+- Price
+- Location
+- Quality details
+- Availability
 
-Farmers can also edit or remove their listings.
+Sellers can edit and delete their own listings.
 
 ### Marketplace
 
-The marketplace allows buyers to:
+Consumers and bulk buyers can:
 
-* Browse available products.
-* Search for specific products.
-* Filter products by price and location.
-* View product details.
-* View information about the farmer/FPO.
+- Browse available products.
+- Search by product name.
+- Filter by category.
+- Filter by maximum price.
+- Filter by location.
+- View product information.
+- View product reviews and ratings.
 
-### Cart and Orders
+### Shopping Cart
 
 Consumers can:
 
-1. Select a product.
-2. Add it to the cart.
-3. Specify quantity.
-4. Place an order.
-5. View the order status.
+- Add products to the cart.
+- Update quantities.
+- Remove products.
+- Clear the cart.
+- Place orders.
 
-Farmers can view and manage incoming orders.
+### Consumer Orders
 
-### Bulk Orders
+Consumers can:
 
-Bulk buyers can search for products based on their required quantity and place larger orders directly with farmers/FPOs.
+- Place orders.
+- View order history.
+- View order details.
+- View order status.
 
-### Delivery Management
+### Bulk Buyer Requirements
 
-The platform provides basic delivery management by storing:
+Bulk buyers can create requirements specifying:
 
-* Pickup location
-* Delivery location
-* Estimated delivery information
-* Delivery status
-
-Farmer / FPO
-     │
-     │ Product listed
-     ▼
-  FarmDirect
-     │
-     │ Buyer places order
-     ▼
-    Buyer
-     │
-     │ Delivery requested
-     ▼
-Delivery arranged
-     │
-     ├── Farmer/FPO delivers
-     ├── Buyer arranges pickup
-     └── Third-party delivery partner
-     │
-     ▼
-Buyer receives goods
-     │
-     ▼
-Order marked "Delivered"
-
-Order statuses can include:
-
-```text
-Placed
-  ↓
-Accepted
-  ↓
-Preparing
-  ↓
-Picked Up
-  ↓
-Out for Delivery
-  ↓
-Delivered
-```
-
-### Admin Dashboard
-
-The administrator can monitor:
-
-* Total users
-* Registered farmers/FPOs
-* Available products
-* Total orders
-* Pending orders
-* Completed orders
-
----
-### Direct consumer marketplace
-
-Example:
-
-Farmer: Ravi
-
-Product: Organic Tomatoes
-
-Quantity: 500 kg
-
-Price: ₹35/kg
-
-Location: Nashik
-
-A normal consumer can browse this product and order 2 kg, 5 kg, etc.
-
-This gives FarmDirect a B2C marketplace character.
-
-### Bulk buyer requirements
-
-This could be your strongest differentiator.
-
-A restaurant/food-processing company posts:
-
-Required: 5,000 kg onions
-Maximum price: ₹25/kg
-Delivery location: Pune
-Required by: 15 October
+- Product
+- Required quantity
+- Maximum price
+- Delivery/location information
+- Requirement details
 
 Farmers/FPOs can respond with offers.
 
-FarmDirect then becomes:
+### Bulk Buyer Offers
 
-B2C + B2B agricultural marketplace.
+Farmers/FPOs can submit offers against suitable bulk requirements.
+
+Bulk buyers can accept or reject offers.
+
+Offer status changes generate relevant notifications.
+
+### Reviews and Ratings
+
+Consumers can review products they have purchased.
+
+Features include:
+
+- Rating from 1 to 5.
+- Written review.
+- Purchase verification.
+- Duplicate-review prevention.
+- Product review listing.
+- Average product rating.
+
+### Notifications
+
+The application provides notifications for relevant marketplace events.
+
+Examples include:
+
+- New order received by a seller.
+- New bulk requirement posted.
+- New offer received by a bulk buyer.
+- Offer accepted or rejected.
+
+Users can view their notifications and mark unread notifications as read.
+
+### AI-Assisted Price Suggestion
+
+Farmers/FPOs can request an advisory price suggestion while adding a product.
+
+The suggestion uses product information such as:
+
+- Product name
+- Category
+- Quantity
+- Location
+- Quality details
+
+The suggested price is advisory only.
+
+The seller can:
+
+- Use the suggestion as a reference.
+- Modify the final price.
+- Ignore the suggestion.
+
+The system never automatically overwrites the seller's final product price.
+
+The current implementation is a local deterministic price-suggestion engine intended
+for the college-project prototype and does not require an external AI API.
+
+### Administrator Dashboard
+
+The administrator dashboard provides basic platform statistics, including:
+
+- Total users
+- Farmers/FPOs
+- Consumers
+- Bulk buyers
+- Products
+- Orders
+- Open bulk requirements
+- Pending offers
 
 ## 6. System Architecture
 
-The application follows a simple web application architecture:
-
 ```text
 User
-  │
-  ▼
-HTML + CSS Interface
-  │
-  ▼
+  |
+  v
+HTML / CSS / Jinja2
+  |
+  v
 Flask Application
-  │
-  ├── Authentication
-  ├── Marketplace
-  ├── Product Management
-  ├── Order Management
-  └── Delivery Management
-  │
-  ▼
-SQLAlchemy
-  │
-  ▼
+  |
+  +-- Authentication
+  +-- Role-Based Access Control
+  +-- Product Management
+  +-- Marketplace
+  +-- Shopping Cart
+  +-- Order Management
+  +-- Bulk Requirements
+  +-- Offers
+  +-- Reviews & Ratings
+  +-- Notifications
+  +-- AI Price Suggestion
+  +-- Administration
+  |
+  v
 SQLite Database
-```
-
----
-
-## 7. Technology Stack
-
-| Component       | Technology   |
-| --------------- | ------------ |
-| Backend         | Python       |
-| Web Framework   | Flask        |
-| Frontend        | HTML5        |
-| Styling         | CSS3         |
-| Template Engine | Jinja2       |
-| Database        | SQLite       |
-| Database ORM    | SQLAlchemy   |
-| Version Control | Git / GitHub |
-
----
-
-## 8. Database Design
-
-The initial database consists of the following main entities:
-
-### User
-
-Stores information about registered users.
-
-```text
-id
-name
-email
-password
-phone
-role
-location
-```
-
-### Product
-
-Stores agricultural product listings.
-
-```text
-id
-farmer_id
-name
-category
-quantity
-price
-location
-harvest_date
-availability
-```
-
-### Order
-
-Stores order information.
-
-```text
-id
-buyer_id
-farmer_id
-product_id
-quantity
-total_price
-status
-order_date
-```
-
-### Delivery
-
-Stores delivery-related information.
-
-```text
-id
-order_id
-pickup_location
-delivery_location
-estimated_time
-status
-```
-
----
-
-## 9. Main Application Pages
-
-The application will contain pages such as:
-
-```text
-Home
-Login
-Register
-
-Farmer Dashboard
- ├── Profile
- ├── Add Product
- ├── My Products
- └── Orders
-
-Marketplace
- ├── Product Search
- ├── Product Details
- └── Cart
-
-Consumer
- ├── Checkout
- ├── My Orders
- └── Order Tracking
-
-Bulk Buyer
- ├── Product Search
- ├── Bulk Orders
- └── Order Tracking
-
-Admin
- ├── Dashboard
- ├── Users
- ├── Products
- ├── Orders
- └── Deliveries
-```
-
----
-
-## 10. Project Structure
-
-The planned project structure is:
-
-```text
-FarmDirect/
-│
-├── app.py
-├── models.py
-├── database.py
-│
-├── templates/
-│   ├── index.html
-│   ├── login.html
-│   ├── register.html
-│   ├── farmer_dashboard.html
-│   ├── add_product.html
-│   ├── marketplace.html
-│   ├── product_details.html
-│   ├── cart.html
-│   ├── checkout.html
-│   ├── orders.html
-│   └── admin_dashboard.html
-│
-├── static/
-│   └── css/
-│       └── style.css
-│
-├── instance/
-│   └── farmdirect.db
-│
-└── README.md
-```
-
----
-
-## 11. Basic User Flow
-
-### Farmer
-
-```text
-Register
-   ↓
-Create Profile
-   ↓
-Add Agricultural Product
-   ↓
-Product Listed on Marketplace
-   ↓
-Receive Order
-   ↓
-Accept Order
-   ↓
-Prepare Product
-   ↓
-Update Order Status
-```
-
-### Consumer
-
-```text
-Register
-   ↓
-Browse Marketplace
-   ↓
-Search Product
-   ↓
-View Product Details
-   ↓
-Add to Cart
-   ↓
-Place Order
-   ↓
-Track Order
-   ↓
-Receive Product
-```
-
-### Bulk Buyer
-
-```text
-Register
-   ↓
-Search Product
-   ↓
-Check Available Quantity
-   ↓
-Select Farmer/FPO
-   ↓
-Place Bulk Order
-   ↓
-Track Order
-```
-
----
-
-## 12. MVP Scope
-
-The initial version of FarmDirect will focus on the following features:
-
-* User registration and authentication
-* Farmer/FPO product listing
-* Product marketplace
-* Product search and filtering
-* Shopping cart
-* Order placement
-* Farmer order management
-* Bulk ordering
-* Basic delivery tracking
-* Admin dashboard
-
-The MVP will focus on demonstrating the **core farmer-to-buyer marketplace workflow** rather than implementing a large number of advanced features.
-
----
-
-## 13. Future Enhancements
-
-Possible future improvements include:
-
-* Online payment gateway integration
-* Real-time delivery tracking
-* Mobile application
-* Multilingual support
-* Voice-based interaction for farmers
-* Product quality verification
-* Warehouse and cold-storage integration
-* Government scheme integration
-* Advanced analytics and reporting
-
----
-
-## 14. Expected Impact
-
-FarmDirect aims to create a more direct and transparent agricultural marketplace by reducing unnecessary intermediaries.
-
-The expected benefits are:
-
-**For Farmers**
-
-* Better access to buyers
-* Improved price transparency
-* Wider customer reach
-
-**For Consumers**
-
-* Direct access to agricultural products
-* Better price visibility
-* Information about the source of produce
-
-**For Bulk Buyers**
-
-* Easier supplier discovery
-* Access to larger quantities
-* Direct communication with producers
-
----
-
-## 15. Success Criteria
-
-The MVP will be considered successful if:
-
-* Farmers can successfully list agricultural products.
-* Consumers can discover and order products.
-* Bulk buyers can place larger orders.
-* Farmers can manage incoming orders.
-* Buyers can track order status.
-* Administrators can monitor platform activity.
-* The complete farmer-to-buyer transaction can be demonstrated successfully.
-
----
-
-## 16. Development Approach
-
-The project follows the initial stages of the **Software Development Life Cycle (SDLC)**:
-
-```text
-Planning
-   ↓
-Requirements Analysis
-   ↓
-System Design
-   ↓
-Development
-   ↓
-Testing
-   ↓
-Deployment
-   ↓
-Maintenance
-```
-
-## Production Configuration
-
-FarmDirect uses the `SECRET_KEY` environment variable for Flask session security.
-
-Before running the application in a production environment, configure a secure secret key.
-
-### Windows PowerShell
-
-```powershell
-$env:SECRET_KEY="your-secure-secret-key"
-python app.py
-
-## How Ai can be used 
-
-                         FarmDirect
-                             │
-             ┌───────────────┼────────────────┐
-             │               │                │
-             ▼               ▼                ▼
-       AI Image         AI Freshness      AI Price
-       Quality Check    Assistance         Suggestion
-             │               │                │
-             ▼               ▼                ▼
-       Produce image     Product data      Market/order data
-             │               │                │
-             ▼               ▼                ▼
-       Visual quality    Freshness level    Suggested price
-       indicators        + action           + explanation
-       
-
-This README currently focuses on the first three stages:
-
-1. **Planning** — defining the problem, objectives, users, and MVP scope.
-2. **Requirements Analysis** — identifying functional and non-functional requirements.
-3. **System Design** — defining the application architecture, database, modules, and user flows.
-
----
-
-1. e-NAM procedure
-
-The basic e-NAM workflow is centered around the mandi/APMC and electronic bidding. Farmers can register through the portal/app or at an e-NAM mandi. Produce is brought into the mandi, a lot is created, quality/assaying and weighment can take place, traders participate in online bidding, and the winning bid is declared. The farmer can accept or reject the winning price, after which sale documentation and payment are processed.
-
-e-NAM flow:
-
-Farmer → Mandi/APMC → Gate Entry → Lot Creation → Assaying/Quality Check → Trader Bidding → Winner Selected → Farmer Accepts/Rejects → Sale Bill → Payment
-
-For FPOs, e-NAM allows the FPO to aggregate members' produce and sell it as one or multiple lots through e-trading.
-
-2. FarmDirect procedure
-
-Your FarmDirect can follow a direct marketplace model rather than a mandi/auction model.
-
-Farmer/FPO side
-
-Step 1 — Registration
-
-Farmer/FPO creates an account.
-
-↓
-
-Step 2 — Create product listing
-
-For example:
-
-Product: Tomatoes
-Quantity: 1,000 kg
-Price: ₹30/kg
-Location: Nashik
-Quality: Grade A
-
-↓
-
-Step 3 — Product becomes available
-
-Consumers and bulk buyers can see the listing.
-
-↓
-
-Step 4 — Buyer selects product
-
-A consumer can purchase 5 kg.
-
-A bulk buyer can request 500 kg or 1,000 kg.
-
-↓
-
-Step 5 — Order/offer
-
-Buyer places an order or sends an offer.
-
-↓
-
-Step 6 — Farmer/FPO accepts
-
-Farmer/FPO accepts or rejects the order/offer.
-
-↓
-
-Step 7 — Payment
-
-Buyer makes payment through the system.
-
-↓
-
-Step 8 — Delivery
-
-Produce is delivered to the buyer.
-
-↓
-
-Step 9 — Order completion
-
-Buyer confirms receipt and can provide a rating/review.
-
-FarmDirect flow
-
-Farmer/FPO → Product Listing → Consumer/Bulk Buyer → Order/Offer → Farmer Accepts → Payment → Delivery → Review
-
-## 17. Conclusion
-
-FarmDirect is intended to provide a simple and accessible digital marketplace that brings farmers/FPOs closer to their end buyers.
-
-By combining a straightforward web interface with a Python Flask backend and a relational database, the project provides a practical foundation for improving direct agricultural commerce.
-
-The initial focus is on building a functional MVP that demonstrates the complete flow from **product listing → buyer discovery → order placement → order management → delivery tracking**.

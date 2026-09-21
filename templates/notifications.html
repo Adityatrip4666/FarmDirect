@@ -1,12 +1,17 @@
 {% extends "base.html" %}
 
+{% block title %}Notifications - FarmDirect{% endblock %}
+
 {% block content %}
+
 <h1>Notifications</h1>
 
 {% if notifications %}
 
 {% for notification in notifications %}
-<div>
+
+<div class="notification-card">
+
     <p>
         {% if not notification['is_read'] %}
         <strong>Unread</strong>
@@ -16,47 +21,30 @@
     </p>
 
     <p>{{ notification['message'] }}</p>
-    <small>{{ notification['created_at'] }}</small>
+
+    <small class="muted">
+        {{ notification['created_at'] }}
+    </small>
 
     {% if not notification['is_read'] %}
-    <form method="POST" action="{{ url_for('mark_notification_read', notification_id=notification['id']) }}">
+    <form method="POST" action="{{ url_for(
+                'mark_notification_read',
+                notification_id=notification['id']
+            ) }}">
         <button type="submit">Mark as Read</button>
     </form>
     {% endif %}
+
 </div>
 
-<hr>
 {% endfor %}
+
 {% else %}
-<p>No notifications yet.</p>
 
-    {% for notification in notifications %}
-        <div>
-            <p>
-                {% if not notification['is_read'] %}
-                    <strong>Unread</strong>
-                {% else %}
-                    <span>Read</span>
-                {% endif %}
-            </p>
-
-            <p>{{ notification['message'] }}</p>
-            <small>{{ notification['created_at'] }}</small>
-
-            {% if not notification['is_read'] %}
-                <form
-                    method="POST"
-                    action="{{ url_for('mark_notification_read', notification_id=notification['id']) }}"
-                >
-                    <button type="submit">Mark as Read</button>
-                </form>
-            {% endif %}
-        </div>
-
-        <hr>
-    {% endfor %}
-{% else %}
+<div class="card">
     <p>No notifications yet.</p>
+</div>
 
 {% endif %}
+
 {% endblock %}

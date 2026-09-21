@@ -1,28 +1,21 @@
-<!DOCTYPE html>
+{% extends "base.html" %}
 
-<html>
+{% block title %}Add Product - FarmDirect{% endblock %}
 
-<head>
-    <title>Add Product - FarmDirect</title>
-</head>
+{% block content %}
 
-<body>
+<div class="form-card">
 
     <h1>Add Product</h1>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% for category, message in messages %}
-    <p>{{ message }}</p>
-    {% endfor %}
-    {% endwith %}
-
     <form method="POST">
 
-        <label for="name">Product Name:</label><br>
+        <label for="name">Product Name:</label>
         <input type="text" id="name" name="name" required>
+
         <br><br>
 
-        <label for="category">Category:</label><br>
+        <label for="category">Category:</label>
         <select id="category" name="category" required>
             <option value="">Select Category</option>
             <option value="Vegetables">Vegetables</option>
@@ -32,9 +25,10 @@
             <option value="Spices">Spices</option>
             <option value="Other">Other</option>
         </select>
+
         <br><br>
 
-        <label for="quantity">Quantity:</label><br>
+        <label for="quantity">Quantity:</label>
         <input
             type="number"
             id="quantity"
@@ -43,9 +37,10 @@
             step="0.01"
             required
         >
+
         <br><br>
 
-        <label for="price">Price:</label><br>
+        <label for="price">Price:</label>
         <input
             type="number"
             id="price"
@@ -54,39 +49,50 @@
             step="0.01"
             required
         >
+
         <br><br>
 
-        <label for="location">Location:</label><br>
+        <label for="location">Location:</label>
         <input type="text" id="location" name="location" required>
+
         <br><br>
 
-        <label for="quality_details">Quality Details:</label><br>
+        <label for="quality_details">Quality Details:</label>
         <textarea
             id="quality_details"
             name="quality_details"
             rows="5"
         ></textarea>
+
         <br><br>
 
-        <button
-            type="submit"
-            formaction="{{ url_for('suggest_product_price') }}"
-        >
-            Get AI Price Suggestion
-        </button>
+        <div class="actions">
 
-        <button type="submit">Add Product</button>
+            <button
+                type="submit"
+                formaction="{{ url_for('suggest_product_price') }}"
+            >
+                Get AI Price Suggestion
+            </button>
+
+            <button type="submit">
+                Add Product
+            </button>
+
+        </div>
 
     </form>
 
-    <br>
+    <div class="actions">
+        <a class="button button-secondary" href="{{ url_for('my_products') }}">
+            My Products
+        </a>
 
-    <a href="{{ url_for('my_products') }}">My Products</a>
+        <a class="button button-secondary" href="{{ url_for('dashboard') }}">
+            Back to Dashboard
+        </a>
+    </div>
 
-    <br><br>
+</div>
 
-    <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
-
-</body>
-
-</html>
+{% endblock %}

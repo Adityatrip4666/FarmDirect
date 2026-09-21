@@ -1734,6 +1734,63 @@ def delete_product(product_id):
     flash("Product deleted successfully.", "success")
     return redirect(url_for("my_products"))
 
+@app.route("/notifications")
+@login_required
+def notifications():
+    conn = get_db_connection()
+
+    user_notifications = conn.execute(
+        """
+        SELECT *
+        FROM notifications
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+        """,
+        (session["user_id"],),
+    ).fetchall()
+
+    conn.close()
+
+    return render_template(
+        "notifications.html",
+        notifications=user_notifications,
+    )
+
+
+@app.route("/notifications/<int:notification_id>/read", methods=["POST"])
+@login_required
+def mark_notification_read(notification_id):
+    conn = get_db_connection()
+
+    notification = conn.execute(
+        """
+        SELECT id
+        FROM notifications
+        WHERE id = ? AND user_id = ?
+        """,
+        (notification_id, session["user_id"]),
+    ).fetchone()
+
+    if notification is None:
+        conn.close()
+        flash("Notification not found.", "error")
+        return redirect(url_for("notifications"))
+
+    conn.execute(
+        """
+        UPDATE notifications
+        SET is_read = 1
+        WHERE id = ? AND user_id = ?
+        """,
+        (notification_id, session["user_id"]),
+    )
+
+    conn.commit()
+    conn.close()
+
+    flash("Notification marked as read.", "success")
+    return redirect(url_for("notifications"))
+
 
 if __name__ == "__main__":
     debug_mode = os.environ.get("FLASK_DEBUG", "0") == "1"

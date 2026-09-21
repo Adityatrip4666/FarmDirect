@@ -1551,3 +1551,159 @@ def test_product_reviews_display_average_rating(client):
     assert b"Average Rating:" in response.data
     assert b"4.0 / 5" in response.data
     assert b"Good product." in response.data
+
+def test_user_can_view_notifications(client):
+    user_id = create_user(
+        "Notification Consumer",
+        "notification@example.com",
+        "password123",
+        "consumer",
+    )
+
+    conn = database.get_db_connection()
+
+    conn.execute(
+        """
+        INSERT INTO notifications (user_id, message)
+        VALUES (?, ?)
+        """,
+        (
+            user_id,
+            "Test notification",
+        ),
+    )
+
+    conn.commit()
+    conn.close()
+
+    response = login(
+        client,
+        "notification@example.com",
+        "password123",
+    )
+
+    assert response.status_code == 200
+
+    response = client.get("/notifications")
+
+    assert response.status_code == 200
+    assert b"Test notification" in response.data
+
+
+def test_user_can_mark_own_notification_as_read(client):
+    user_id = create_user(
+        "Notification Consumer",
+        "notification_read@example.com",
+        "password123",
+        "consumer",
+    )
+
+    conn = database.get_db_connection()
+
+    cursor = conn.execute(
+        """
+        INSERT INTO notifications (user_id, message)
+        VALUES (?, ?)
+        """,
+        (
+            user_id,
+            "Unread notification",
+        ),
+    )
+
+    notification_id = cursor.lastrowid
+
+    conn.commit()
+    conn.close()
+
+    login(
+        client,
+        "notification_read@example.com",
+        "password123",
+    )
+
+    response = client.post(
+        f"/notifications/{notification_id}/read",
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert b"Notification marked as read." in response.data
+
+    conn = database.get_db_connection()
+
+    notification = conn.execute(
+        """
+        SELECT is_read
+        FROM notifications
+        WHERE id = ?
+        """,
+        (notification_id,),
+    ).fetchone()
+
+    conn.close()
+
+    assert notification["is_read"] == 1
+
+
+def test_user_cannot_mark_another_users_notification_as_read(client):
+    first_user_id = create_user(
+        "First Consumer",
+        "first_notification@example.com",
+        "password123",
+        "consumer",
+    )
+
+    second_user_id = create_user(
+        "Second Consumer",
+        "second_notification@example.com",
+        "password123",
+        "consumer",
+    )
+
+    conn = database.get_db_connection()
+
+    cursor = conn.execute(
+        """
+        INSERT INTO notifications (user_id, message)
+        VALUES (?, ?)
+        """,
+        (
+            first_user_id,
+            "Private notification",
+        ),
+    )
+
+    notification_id = cursor.lastrowid
+
+    conn.commit()
+    conn.close()
+
+    login(
+        client,
+        "second_notification@example.com",
+        "password123",
+    )
+
+    response = client.post(
+        f"/notifications/{notification_id}/read",
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert b"Notification not found." in response.data
+
+    conn = database.get_db_connection()
+
+    notification = conn.execute(
+        """
+        SELECT is_read
+        FROM notifications
+        WHERE id = ?
+        """,
+        (notification_id,),
+    ).fetchone()
+
+    conn.close()
+
+    assert notification["is_read"] == 0

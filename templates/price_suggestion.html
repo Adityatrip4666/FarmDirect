@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>AI Price Suggestion</h1>
+
+<p>
+    This is an advisory price suggestion.
+    You decide the final selling price.
+</p>
+
+<h2>Product Information</h2>
+
+<p><strong>Product:</strong> {{ product_name }}</p>
+<p><strong>Category:</strong> {{ category }}</p>
+<p><strong>Quantity:</strong> {{ quantity }}</p>
+<p><strong>Location:</strong> {{ location }}</p>
+
+{% if quality_details %}
+    <p><strong>Quality:</strong> {{ quality_details }}</p>
+{% endif %}
+
+<h2>
+    Suggested Price:
+    ₹{{ "%.2f"|format(suggested_price) }}
+</h2>
+
+<p>
+    You can use this suggestion, modify it, or ignore it.
+    It will not automatically change your product price.
+</p>
+
+<a href="{{ url_for('add_product') }}">
+    Return to Add Product
+</a>
+{% endblock %}

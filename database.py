@@ -123,9 +123,7 @@ def init_db():
     """)
 
     # Add status to existing users table if it does not already exist.
-    columns = conn.execute(
-        "PRAGMA table_info(users)"
-    ).fetchall()
+    columns = conn.execute("PRAGMA table_info(users)").fetchall()
 
     column_names = [column["name"] for column in columns]
 
@@ -136,6 +134,23 @@ def init_db():
             ADD COLUMN status TEXT NOT NULL DEFAULT 'Active'
             """
         )
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS reviews (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            reviewer_id INTEGER NOT NULL,
+            product_id INTEGER NOT NULL,
+            order_id INTEGER NOT NULL,
+            rating INTEGER NOT NULL,
+            review_text TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (reviewer_id) REFERENCES users(id),
+            FOREIGN KEY (product_id) REFERENCES products(id),
+            FOREIGN KEY (order_id) REFERENCES orders(id),
+            UNIQUE (reviewer_id, product_id, order_id)
+        )
+    """)
 
     conn.commit()
     conn.close()

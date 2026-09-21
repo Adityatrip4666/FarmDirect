@@ -1,7 +1,265 @@
-body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; }
-nav a { margin-right: 15px; }
-form label { display: block; margin-top: 10px; }
-input, select { width: 100%; padding: 6px; margin-top: 4px; }
-button { margin-top: 15px; padding: 8px 16px; }
-.flash.error { color: red; }
-.flash.success { color: green; }
+* {
+    box-sizing: border-box;
+}
+
+html {
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1.5;
+}
+
+body {
+    margin: 0;
+    background: #f5f7f5;
+    color: #263326;
+}
+
+a {
+    color: #176b3a;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+header {
+    background: #176b3a;
+    color: white;
+    padding: 16px 24px;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+nav {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+nav a {
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+}
+
+nav a:hover {
+    background: rgba(255, 255, 255, 0.15);
+    text-decoration: none;
+}
+
+main {
+    width: min(1100px, calc(100% - 32px));
+    margin: 24px auto;
+}
+
+h1,
+h2,
+h3 {
+    color: #1d3d27;
+}
+
+.card,
+.product-card,
+.order-card,
+.notification-card,
+.form-card,
+.stat-card {
+    background: white;
+    border: 1px solid #dce5dc;
+    border-radius: 10px;
+    padding: 18px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+form {
+    background: white;
+    border: 1px solid #dce5dc;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+label {
+    display: inline-block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+input,
+select,
+textarea {
+    width: 100%;
+    max-width: 600px;
+    padding: 10px 12px;
+    border: 1px solid #b9c8ba;
+    border-radius: 6px;
+    font: inherit;
+    background: white;
+}
+
+textarea {
+    resize: vertical;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    outline: 2px solid #9bc7a9;
+    border-color: #176b3a;
+}
+
+button,
+.button {
+    display: inline-block;
+    padding: 9px 14px;
+    border: 0;
+    border-radius: 6px;
+    background: #176b3a;
+    color: white;
+    font: inherit;
+    cursor: pointer;
+    margin: 4px 4px 4px 0;
+}
+
+button:hover,
+.button:hover {
+    background: #12572f;
+    text-decoration: none;
+}
+
+.button-secondary {
+    background: #5f6b61;
+}
+
+.button-danger {
+    background: #a83232;
+}
+
+.button-warning {
+    background: #9a6b00;
+}
+
+.flash {
+    padding: 12px 14px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    background: #eef5ee;
+    border: 1px solid #cbdccc;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    margin-bottom: 20px;
+}
+
+th,
+td {
+    padding: 10px 12px;
+    border: 1px solid #dce5dc;
+    text-align: left;
+    vertical-align: top;
+}
+
+th {
+    background: #edf3ed;
+}
+
+.status {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #edf3ed;
+    font-size: 0.9rem;
+}
+
+.rating {
+    font-weight: 600;
+}
+
+.price {
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.muted {
+    color: #687368;
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+footer {
+    margin-top: 40px;
+    padding: 20px 24px;
+    text-align: center;
+    color: #687368;
+    border-top: 1px solid #dce5dc;
+}
+
+@media (max-width: 800px) {
+    .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    main {
+        width: min(100% - 24px, 700px);
+        margin: 16px auto;
+    }
+
+    header {
+        padding: 14px 16px;
+    }
+}
+
+@media (max-width: 560px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    nav {
+        flex-direction: column;
+    }
+
+    nav a {
+        display: block;
+    }
+
+    form {
+        padding: 14px;
+    }
+
+    input,
+    select,
+    textarea {
+        max-width: none;
+    }
+
+    button,
+    .button {
+        width: 100%;
+        margin-right: 0;
+    }
+
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+}

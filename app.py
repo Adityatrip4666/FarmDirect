@@ -5,6 +5,21 @@ import os
 from functools import wraps
 
 
+def create_notification(user_id, message):
+    conn = get_db_connection()
+
+    conn.execute(
+        """
+        INSERT INTO notifications (user_id, message)
+        VALUES (?, ?)
+        """,
+        (user_id, message),
+    )
+
+    conn.commit()
+    conn.close()
+
+
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -127,15 +142,10 @@ def login():
 
         conn = get_db_connection()
 
-        user = conn.execute(
-            "SELECT * FROM users WHERE email = ?",
-            (email,)
-        ).fetchone()
+        user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
 
         # Invalid credentials
-        if user is None or not check_password_hash(
-            user["password_hash"], password
-        ):
+        if user is None or not check_password_hash(user["password_hash"], password):
             conn.close()
             flash("Invalid email or password.", "error")
             return render_template("login.html")
@@ -194,6 +204,64 @@ def dashboard():
         return redirect(url_for("logout"))
 
 
+@app.route("/notifications")
+@login_required
+def notifications():
+    conn = get_db_connection()
+
+    user_notifications = conn.execute(
+        """
+        SELECT *
+        FROM notifications
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+        """,
+        (session["user_id"],),
+    ).fetchall()
+
+    conn.close()
+
+    return render_template(
+        "notifications.html",
+        notifications=user_notifications,
+    )
+
+
+@app.route("/notifications/<int:notification_id>/read", methods=["POST"])
+@login_required
+def mark_notification_read(notification_id):
+    conn = get_db_connection()
+
+    notification = conn.execute(
+        """
+        SELECT id
+        FROM notifications
+        WHERE id = ? AND user_id = ?
+        """,
+        (notification_id, session["user_id"]),
+    ).fetchone()
+
+    if notification is None:
+        conn.close()
+        flash("Notification not found.", "error")
+        return redirect(url_for("notifications"))
+
+    conn.execute(
+        """
+        UPDATE notifications
+        SET is_read = 1
+        WHERE id = ? AND user_id = ?
+        """,
+        (notification_id, session["user_id"]),
+    )
+
+    conn.commit()
+    conn.close()
+
+    flash("Notification marked as read.", "success")
+    return redirect(url_for("notifications"))
+
+
 @app.route("/farmer/dashboard")
 @role_required("farmer")
 def farmer_dashboard():
@@ -217,14 +285,15 @@ def consumer_dashboard():
 def bulk_buyer_dashboard():
     return render_template("role_dashboard.html", role_label="Bulk Buyer")
 
+
 @app.route("/admin/dashboard")
 @role_required("admin")
 def admin_dashboard():
     conn = get_db_connection()
 
-    total_users = conn.execute(
-        "SELECT COUNT(*) AS count FROM users"
-    ).fetchone()["count"]
+    total_users = conn.execute("SELECT COUNT(*) AS count FROM users").fetchone()[
+        "count"
+    ]
 
     total_farmers = conn.execute(
         "SELECT COUNT(*) AS count FROM users WHERE role = 'farmer'"
@@ -242,13 +311,13 @@ def admin_dashboard():
         "SELECT COUNT(*) AS count FROM users WHERE role = 'bulk_buyer'"
     ).fetchone()["count"]
 
-    total_products = conn.execute(
-        "SELECT COUNT(*) AS count FROM products"
-    ).fetchone()["count"]
+    total_products = conn.execute("SELECT COUNT(*) AS count FROM products").fetchone()[
+        "count"
+    ]
 
-    total_orders = conn.execute(
-        "SELECT COUNT(*) AS count FROM orders"
-    ).fetchone()["count"]
+    total_orders = conn.execute("SELECT COUNT(*) AS count FROM orders").fetchone()[
+        "count"
+    ]
 
     open_requirements = conn.execute(
         """
@@ -281,6 +350,7 @@ def admin_dashboard():
         pending_offers=pending_offers,
     )
 
+
 @app.route("/admin/users")
 @role_required("admin")
 def admin_users():
@@ -301,10 +371,8 @@ def admin_users():
 
     conn.close()
 
-    return render_template(
-        "admin_users.html",
-        users=users
-    )
+    return render_template("admin_users.html", users=users)
+
 
 @app.route("/admin/users/<int:user_id>/deactivate", methods=["POST"])
 @role_required("admin")
@@ -345,6 +413,7 @@ def deactivate_user(user_id):
     flash("User deactivated successfully.", "success")
     return redirect(url_for("admin_users"))
 
+
 @app.route("/admin/products")
 @role_required("admin")
 def admin_products():
@@ -370,10 +439,8 @@ def admin_products():
 
     conn.close()
 
-    return render_template(
-        "admin_products.html",
-        products=products
-    )
+    return render_template("admin_products.html", products=products)
+
 
 @app.route("/admin/products/<int:product_id>/delete", methods=["POST"])
 @role_required("admin")
@@ -407,6 +474,7 @@ def delete_admin_product(product_id):
 
     flash("Product removed successfully.", "success")
     return redirect(url_for("admin_products"))
+
 
 @app.route("/user/<int:user_id>/account")
 @login_required
@@ -808,6 +876,17 @@ def place_order():
 
             conn.execute(
                 """
+                INSERT INTO notifications (user_id, message)
+                VALUES (?, ?)
+                """,
+                (
+                    seller_id,
+                    f"New order #{order_id} received for your product.",
+                ),
+            ) 
+
+            conn.execute(
+                """
                 UPDATE products
                 SET quantity = quantity - ?,
                     availability = CASE
@@ -968,6 +1047,27 @@ def add_requirement():
             ),
         )
 
+        recipients = conn.execute(
+            """
+            SELECT id
+            FROM users
+            WHERE role IN ('farmer', 'fpo')
+              AND status = 'Active'
+            """
+        ).fetchall()
+
+        for recipient in recipients:
+            conn.execute(
+                """
+                INSERT INTO notifications (user_id, message)
+                VALUES (?, ?)
+                """,
+                (
+                    recipient["id"],
+                    f"New bulk requirement posted: {product_name}.",
+                ),
+            )
+
         conn.commit()
         conn.close()
 
@@ -1098,18 +1198,20 @@ def update_offer_status(offer_id, status):
     conn = get_db_connection()
 
     offer = conn.execute(
-        """
-        SELECT
-            offers.id,
-            offers.requirement_id
-        FROM offers
-        JOIN bulk_requirements
-            ON offers.requirement_id = bulk_requirements.id
-        WHERE offers.id = ?
-        AND bulk_requirements.buyer_id = ?
-        """,
-        (offer_id, session["user_id"]),
-    ).fetchone()
+            """
+            SELECT
+                offers.id,
+                offers.requirement_id,
+                offers.seller_id,
+                bulk_requirements.product_name
+            FROM offers
+            JOIN bulk_requirements
+                ON offers.requirement_id = bulk_requirements.id
+            WHERE offers.id = ?
+              AND bulk_requirements.buyer_id = ?
+            """,
+            (offer_id, session["user_id"]),
+        ).fetchone()
 
     if offer is None:
         conn.close()
@@ -1124,6 +1226,18 @@ def update_offer_status(offer_id, status):
         WHERE id = ?
         """,
         (status, offer_id),
+    )
+
+    conn.execute(
+        """
+        INSERT INTO notifications (user_id, message)
+        VALUES (?, ?)
+        """,
+        (
+            offer["seller_id"],
+            f"Your offer for '{offer['product_name']}' was "
+            f"{status.lower()}.",
+        ),
     )
 
     conn.commit()
@@ -1145,6 +1259,7 @@ def submit_offer(requirement_id):
         """
         SELECT
             id,
+            buyer_id,
             product_name,
             category,
             quantity,
@@ -1213,8 +1328,20 @@ def submit_offer(requirement_id):
             ),
         )
 
+        conn.execute(
+            """
+            INSERT INTO notifications (user_id, message)
+            VALUES (?, ?)
+            """,
+            (
+                requirement["buyer_id"],
+                f"New offer received for your bulk requirement: "
+                f"{requirement['product_name']}.",
+            ),
+        )
+
         conn.commit()
-        conn.close()
+        conn.close() 
 
         flash("Offer submitted successfully.", "success")
         return redirect(url_for("available_requirements"))
@@ -1508,6 +1635,196 @@ def delete_product(product_id):
 
     flash("Product deleted successfully.", "success")
     return redirect(url_for("my_products"))
+
+@app.route("/products/<int:product_id>/reviews")
+@login_required
+@role_required("consumer")
+def product_reviews(product_id):
+    conn = get_db_connection()
+
+    product = conn.execute(
+        """
+        SELECT *
+        FROM products
+        WHERE id = ?
+        """,
+        (product_id,),
+    ).fetchone()
+
+    if product is None:
+        conn.close()
+        flash("Product not found.", "error")
+        return redirect(url_for("marketplace"))
+
+    reviews = conn.execute(
+        """
+        SELECT
+            reviews.*,
+            users.name AS reviewer_name
+        FROM reviews
+        JOIN users
+            ON reviews.reviewer_id = users.id
+        WHERE reviews.product_id = ?
+        ORDER BY reviews.created_at DESC
+        """,
+        (product_id,),
+    ).fetchall()
+
+    average_rating = conn.execute(
+        """
+        SELECT AVG(rating) AS average_rating
+        FROM reviews
+        WHERE product_id = ?
+        """,
+        (product_id,),
+    ).fetchone()["average_rating"]
+
+    conn.close()
+
+    return render_template(
+        "product_reviews.html",
+        product=product,
+        reviews=reviews,
+        average_rating=average_rating,
+    )
+
+@app.route(
+    "/products/<int:product_id>/reviews/add",
+    methods=["GET", "POST"],
+)
+@login_required
+@role_required("consumer")
+def add_review(product_id):
+    conn = get_db_connection()
+
+    if request.method == "POST":
+        rating_text = request.form.get("rating", "").strip()
+        review_text = request.form.get("review_text", "").strip()
+
+        try:
+            rating = int(rating_text)
+        except ValueError:
+            rating = 0
+
+        if rating < 1 or rating > 5:
+            conn.close()
+            flash("Rating must be between 1 and 5.", "error")
+            return redirect(
+                url_for("add_review", product_id=product_id)
+            )
+
+        if not review_text:
+            conn.close()
+            flash("Review text is required.", "error")
+            return redirect(
+                url_for("add_review", product_id=product_id)
+            )
+
+        if len(review_text) > 1000:
+            conn.close()
+            flash("Review text must not exceed 1000 characters.", "error")
+            return redirect(
+                url_for("add_review", product_id=product_id)
+            )
+
+    product = conn.execute(
+        """
+        SELECT *
+        FROM products
+        WHERE id = ?
+        """,
+        (product_id,),
+    ).fetchone()
+
+    if product is None:
+        conn.close()
+        flash("Product not found.", "error")
+        return redirect(url_for("marketplace"))
+
+    if request.method == "POST":
+        purchase = conn.execute(
+            """
+            SELECT order_items.order_id
+            FROM order_items
+            JOIN orders
+                ON order_items.order_id = orders.id
+            WHERE orders.buyer_id = ?
+              AND order_items.product_id = ?
+            LIMIT 1
+            """,
+            (session["user_id"], product_id),
+        ).fetchone()
+
+        if purchase is None:
+            conn.close()
+            flash(
+                "You can only review products you have purchased.",
+                "error",
+            )
+            return redirect(
+                url_for("product_reviews", product_id=product_id)
+            )
+
+        existing_review = conn.execute(
+            """
+            SELECT id
+            FROM reviews
+            WHERE reviewer_id = ?
+              AND product_id = ?
+              AND order_id = ?
+            """,
+            (
+                session["user_id"],
+                product_id,
+                purchase["order_id"],
+            ),
+        ).fetchone()
+
+        if existing_review is not None:
+            conn.close()
+            flash(
+                "You have already reviewed this purchase.",
+                "error",
+            )
+            return redirect(
+                url_for("product_reviews", product_id=product_id)
+            )
+
+        conn.execute(
+            """
+            INSERT INTO reviews
+            (
+                reviewer_id,
+                product_id,
+                order_id,
+                rating,
+                review_text
+            )
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                session["user_id"],
+                product_id,
+                purchase["order_id"],
+                rating,
+                review_text,
+            ),
+        )
+
+        conn.commit()
+        conn.close()
+
+        flash("Review submitted successfully.", "success")
+        return redirect(
+            url_for("product_reviews", product_id=product_id)
+        )
+
+    conn.close()
+
+    return render_template(
+        "add_review.html",
+        product=product,
+    )
 
 
 if __name__ == "__main__":

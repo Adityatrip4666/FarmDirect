@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Review {{ product['name'] }}</h1>
+
+<form method="POST">
+    <div>
+        <label for="rating">Rating</label>
+        <select id="rating" name="rating" required>
+            <option value="">Select rating</option>
+            <option value="1">1 - Poor</option>
+            <option value="2">2 - Fair</option>
+            <option value="3">3 - Good</option>
+            <option value="4">4 - Very Good</option>
+            <option value="5">5 - Excellent</option>
+        </select>
+    </div>
+
+    <div>
+        <label for="review_text">Review</label>
+        <textarea
+            id="review_text"
+            name="review_text"
+            maxlength="1000"
+            required
+        ></textarea>
+    </div>
+
+    <button type="submit">Submit Review</button>
+</form>
+
+<a href="{{ url_for('product_reviews', product_id=product['id']) }}">
+    Back to Reviews
+</a>
+{% endblock %}

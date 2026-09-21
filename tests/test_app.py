@@ -126,6 +126,7 @@ def login(client, email, password):
 # Authentication tests
 # -------------------------
 
+
 def test_register_valid_user(client):
     response = client.post(
         "/register",
@@ -213,6 +214,7 @@ def test_inactive_user_cannot_login(client):
 # Authorization tests
 # -------------------------
 
+
 def test_marketplace_requires_consumer_or_bulk_buyer(client):
     response = client.get("/marketplace")
 
@@ -252,6 +254,7 @@ def test_farmer_cannot_access_marketplace(client):
 # -------------------------
 # Product tests
 # -------------------------
+
 
 def test_farmer_can_add_product(client):
     farmer_id = create_user(
@@ -352,6 +355,7 @@ def test_consumer_cannot_add_product(client):
 # Marketplace filtering
 # -------------------------
 
+
 def test_marketplace_search_finds_product(client):
     farmer_id = create_user(
         "Test Farmer",
@@ -377,9 +381,7 @@ def test_marketplace_search_finds_product(client):
 
     login(client, "consumer@example.com", "password123")
 
-    response = client.get(
-        "/marketplace?search=Fresh+Rice"
-    )
+    response = client.get("/marketplace?search=Fresh+Rice")
 
     assert response.status_code == 200
     assert b"Fresh Rice" in response.data
@@ -388,6 +390,7 @@ def test_marketplace_search_finds_product(client):
 # -------------------------
 # Cart tests
 # -------------------------
+
 
 def test_consumer_can_add_product_to_cart(client):
     farmer_id = create_user(
@@ -473,6 +476,7 @@ def test_consumer_can_view_empty_cart(client):
 # Bulk requirement tests
 # -------------------------
 
+
 def test_bulk_buyer_can_create_requirement(client):
     buyer_id = create_user(
         "Bulk Buyer",
@@ -551,6 +555,7 @@ def test_bulk_requirement_rejects_invalid_quantity(client):
 # -------------------------
 # Bulk offer tests
 # -------------------------
+
 
 def test_farmer_can_submit_offer(client):
     buyer_id = create_user(
@@ -700,6 +705,7 @@ def test_offer_rejects_excess_quantity(client):
 # Admin tests
 # -------------------------
 
+
 def test_admin_can_access_dashboard(client):
     create_user(
         "Admin User",
@@ -779,3 +785,762 @@ def test_admin_can_deactivate_user(client):
     conn.close()
 
     assert user["status"] == "Inactive"
+
+
+def test_user_can_view_notifications(client):
+    conn = database.get_db_connection()
+
+    password_hash = generate_password_hash("password123")
+
+    cursor = conn.execute(
+        """
+        INSERT INTO users
+        (name, email, password_hash, role, status)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            "Test Consumer",
+            "notification@example.com",
+            password_hash,
+            "consumer",
+            "Active",
+        ),
+    )
+
+    user_id = cursor.lastrowid
+
+    conn.execute(
+        """
+        INSERT INTO notifications (user_id, message)
+        VALUES (?, ?)
+        """,
+        (
+            user_id,
+            "Test notification",
+        ),
+    )
+
+    conn.commit()
+    conn.close()
+
+    response = client.post(
+        "/login",
+        data={
+            "email": "notification@example.com",
+            "password": "password123",
+        },
+    )
+
+    assert response.status_code == 302
+
+    response = client.get("/notifications")
+
+    assert response.status_code == 200
+
+    
+    assert b"Test notification" in response.data
+
+def test_user_can_mark_own_notification_as_read(client):
+    conn = database.get_db_connection()
+
+    password_hash = generate_password_hash("password123")
+
+    cursor = conn.execute(
+        """
+        INSERT INTO users
+        (name, email, password_hash, role, status)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            "Test Consumer",
+            "read@example.com",
+            password_hash,
+            "consumer",
+            "Active",
+        ),
+    )
+
+    user_id = cursor.lastrowid
+
+    cursor = conn.execute(
+        """
+        INSERT INTO notifications (user_id, message)
+        VALUES (?, ?)
+        """,
+        (
+            user_id,
+            "Unread notification",
+        ),
+    )
+
+    notification_id = cursor.lastrowid
+
+    conn.commit()
+    conn.close()
+
+    client.post(
+        "/login",
+        data={
+            "email": "read@example.com",
+            "password": "password123",
+        },
+    )
+
+    response = client.post(
+        f"/notifications/{notification_id}/read",
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert b"Notification marked as read." in response.data
+
+    conn = database.get_db_connection()
+
+    notification = conn.execute(
+        """
+        SELECT is_read
+        FROM notifications
+        WHERE id = ?
+        """,
+        (notification_id,),
+    ).fetchone()
+
+    conn.close()
+
+    assert notification["is_read"] == 1
+
+
+def test_user_cannot_mark_another_users_notification_as_read(client):
+    conn = database.get_db_connection()
+
+    password_hash = generate_password_hash("password123")
+
+    cursor = conn.execute(
+        """
+        INSERT INTO users
+        (name, email, password_hash, role, status)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            "User One",
+            "userone@example.com",
+            password_hash,
+            "consumer",
+            "Active",
+        ),
+    )
+
+    user_one_id = cursor.lastrowid
+
+    cursor = conn.execute(
+        """
+        INSERT INTO users
+        (name, email, password_hash, role, status)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            "User Two",
+            "usertwo@example.com",
+            password_hash,
+            "consumer",
+            "Active",
+        ),
+    )
+
+    user_two_id = cursor.lastrowid
+
+    cursor = conn.execute(
+        """
+        INSERT INTO notifications (user_id, message)
+        VALUES (?, ?)
+        """,
+        (
+            user_two_id,
+            "Private notification",
+        ),
+    )
+
+    notification_id = cursor.lastrowid
+
+    conn.commit()
+    conn.close()
+
+    client.post(
+        "/login",
+        data={
+            "email": "userone@example.com",
+            "password": "password123",
+        },
+    )
+
+    response = client.post(
+        f"/notifications/{notification_id}/read",
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert b"Notification not found." in response.data
+
+    conn = database.get_db_connection()
+
+    notification = conn.execute(
+        """
+        SELECT is_read
+        FROM notifications
+        WHERE id = ?
+        """,
+        (notification_id,),
+    ).fetchone()
+
+    conn.close()
+
+    assert notification["is_read"] == 0
+def test_consumer_can_review_purchased_product(client):
+    from werkzeug.security import generate_password_hash
+
+    conn = database.get_db_connection()
+
+    seller_cursor = conn.execute(
+        """
+        INSERT INTO users
+        (name, email, password_hash, role, status)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            "Farmer",
+            "review_farmer@example.com",
+            generate_password_hash("password123"),
+            "farmer",
+            "Active",
+        ),
+    )
+
+    seller_id = seller_cursor.lastrowid
+
+    buyer_cursor = conn.execute(
+        """
+        INSERT INTO users
+        (name, email, password_hash, role, status)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            "Consumer",
+            "review_consumer@example.com",
+            generate_password_hash("password123"),
+            "consumer",
+            "Active",
+        ),
+    )
+
+    buyer_id = buyer_cursor.lastrowid
+
+    product_cursor = conn.execute(
+        """
+        INSERT INTO products
+        (
+            seller_id,
+            name,
+            category,
+            quantity,
+            price,
+            location,
+            availability
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            seller_id,
+            "Test Tomatoes",
+            "Vegetables",
+            10,
+            50,
+            "Delhi",
+            "Available",
+        ),
+    )
+
+    product_id = product_cursor.lastrowid
+
+    order_cursor = conn.execute(
+        """
+        INSERT INTO orders
+        (buyer_id, total_amount, status)
+        VALUES (?, ?, ?)
+        """,
+        (
+            buyer_id,
+            50,
+            "Pending",
+        ),
+    )
+
+    order_id = order_cursor.lastrowid
+
+    conn.execute(
+        """
+    INSERT INTO order_items
+    (order_id, product_id, seller_id, quantity, price, subtotal)
+    VALUES (?, ?, ?, ?, ?, ?)
+    """,
+        (
+            order_id,
+            product_id,
+            seller_id,
+            1,
+            50,
+            50,
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+    response = client.post(
+        "/login",
+        data={
+            "email": "review_consumer@example.com",
+            "password": "password123",
+        },
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+
+    response = client.post(
+        f"/products/{product_id}/reviews/add",
+        data={
+            "rating": "5",
+            "review_text": "Excellent quality product.",
+        },
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert b"Review submitted successfully." in response.data
+
+    conn = database.get_db_connection()
+
+    review = conn.execute(
+        """
+        SELECT *
+        FROM reviews
+        WHERE reviewer_id = ?
+          AND product_id = ?
+          AND order_id = ?
+        """,
+        (
+            buyer_id,
+            product_id,
+            order_id,
+        ),
+    ).fetchone()
+
+    conn.close()
+
+    assert review is not None
+    assert review["rating"] == 5
+    assert review["review_text"] == "Excellent quality product."
+
+
+def test_consumer_cannot_review_unpurchased_product(client):
+    from werkzeug.security import generate_password_hash
+
+    conn = database.get_db_connection()
+
+    seller_cursor = conn.execute(
+        """
+        INSERT INTO users
+        (name, email, password_hash, role, status)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            "Farmer",
+            "review_seller@example.com",
+            generate_password_hash("password123"),
+            "farmer",
+            "Active",
+        ),
+    )
+
+    seller_id = seller_cursor.lastrowid
+
+    conn.execute(
+        """
+        INSERT INTO users
+        (name, email, password_hash, role, status)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            "Consumer",
+            "review_buyer@example.com",
+            generate_password_hash("password123"),
+            "consumer",
+            "Active",
+        ),
+    )
+
+    conn.execute(
+        """
+        INSERT INTO products
+        (
+            seller_id,
+            name,
+            category,
+            quantity,
+            price,
+            location,
+            availability
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            seller_id,
+            "Unpurchased Product",
+            "Vegetables",
+            10,
+            50,
+            "Delhi",
+            "Available",
+        ),
+    )
+
+    conn.commit()
+    conn.close()
+
+    client.post(
+        "/login",
+        data={
+            "email": "review_buyer@example.com",
+            "password": "password123",
+        },
+    )
+
+    conn = database.get_db_connection()
+
+    product = conn.execute(
+        """
+        SELECT id
+        FROM products
+        WHERE name = ?
+        """,
+        ("Unpurchased Product",),
+    ).fetchone()
+
+    conn.close()
+
+    response = client.post(
+        f"/products/{product['id']}/reviews/add",
+        data={
+            "rating": "5",
+            "review_text": "This should not be accepted.",
+        },
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert b"You can only review products you have purchased." in response.data
+
+
+def test_review_rejects_invalid_rating(client):
+    from werkzeug.security import generate_password_hash
+
+    conn = database.get_db_connection()
+
+    conn.execute(
+        """
+        INSERT INTO users
+        (name, email, password_hash, role, status)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            "Consumer",
+            "invalid_rating@example.com",
+            generate_password_hash("password123"),
+            "consumer",
+            "Active",
+        ),
+    )
+
+    conn.commit()
+    conn.close()
+
+    client.post(
+        "/login",
+        data={
+            "email": "invalid_rating@example.com",
+            "password": "password123",
+        },
+    )
+
+    response = client.post(
+        "/products/999999/reviews/add",
+        data={
+            "rating": "6",
+            "review_text": "Invalid rating.",
+        },
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert b"Rating must be between 1 and 5." in response.data
+
+
+def test_duplicate_review_is_rejected(client):
+    from werkzeug.security import generate_password_hash
+
+    conn = database.get_db_connection()
+
+    seller_cursor = conn.execute(
+        """
+        INSERT INTO users
+        (name, email, password_hash, role, status)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            "Farmer",
+            "duplicate_farmer@example.com",
+            generate_password_hash("password123"),
+            "farmer",
+            "Active",
+        ),
+    )
+
+    seller_id = seller_cursor.lastrowid
+
+    buyer_cursor = conn.execute(
+        """
+        INSERT INTO users
+        (name, email, password_hash, role, status)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            "Consumer",
+            "duplicate_buyer@example.com",
+            generate_password_hash("password123"),
+            "consumer",
+            "Active",
+        ),
+    )
+
+    buyer_id = buyer_cursor.lastrowid
+
+    product_cursor = conn.execute(
+        """
+        INSERT INTO products
+        (
+            seller_id,
+            name,
+            category,
+            quantity,
+            price,
+            location,
+            availability
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            seller_id,
+            "Duplicate Test Product",
+            "Vegetables",
+            10,
+            50,
+            "Delhi",
+            "Available",
+        ),
+    )
+
+    product_id = product_cursor.lastrowid
+
+    order_cursor = conn.execute(
+        """
+        INSERT INTO orders
+        (buyer_id, total_amount, status)
+        VALUES (?, ?, ?)
+        """,
+        (
+            buyer_id,
+            50,
+            "Pending",
+        ),
+    )
+
+    order_id = order_cursor.lastrowid
+
+    conn.execute(
+        """
+        INSERT INTO order_items
+        (order_id, product_id, seller_id, quantity, price, subtotal)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (
+            order_id,
+            product_id,
+            seller_id,
+            1,
+            50,
+            50,
+        ),
+    )
+
+    conn.commit()
+    conn.close()
+
+    client.post(
+        "/login",
+        data={
+            "email": "duplicate_buyer@example.com",
+            "password": "password123",
+        },
+    )
+
+    first_response = client.post(
+        f"/products/{product_id}/reviews/add",
+        data={
+            "rating": "5",
+            "review_text": "First review.",
+        },
+        follow_redirects=True,
+    )
+
+    assert first_response.status_code == 200
+
+    second_response = client.post(
+        f"/products/{product_id}/reviews/add",
+        data={
+            "rating": "4",
+            "review_text": "Second review.",
+        },
+        follow_redirects=True,
+    )
+
+    assert second_response.status_code == 200
+    assert b"You have already reviewed this purchase." in second_response.data
+
+
+def test_product_reviews_display_average_rating(client):
+    from werkzeug.security import generate_password_hash
+
+    conn = database.get_db_connection()
+
+    seller_cursor = conn.execute(
+        """
+        INSERT INTO users
+        (name, email, password_hash, role, status)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            "Farmer",
+            "rating_farmer@example.com",
+            generate_password_hash("password123"),
+            "farmer",
+            "Active",
+        ),
+    )
+
+    seller_id = seller_cursor.lastrowid
+
+    buyer_cursor = conn.execute(
+        """
+        INSERT INTO users
+        (name, email, password_hash, role, status)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            "Consumer",
+            "rating_buyer@example.com",
+            generate_password_hash("password123"),
+            "consumer",
+            "Active",
+        ),
+    )
+
+    buyer_id = buyer_cursor.lastrowid
+
+    product_cursor = conn.execute(
+        """
+        INSERT INTO products
+        (
+            seller_id,
+            name,
+            category,
+            quantity,
+            price,
+            location,
+            availability
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            seller_id,
+            "Rated Product",
+            "Fruits",
+            10,
+            100,
+            "Delhi",
+            "Available",
+        ),
+    )
+
+    product_id = product_cursor.lastrowid
+
+    order_cursor = conn.execute(
+        """
+        INSERT INTO orders
+        (buyer_id, total_amount, status)
+        VALUES (?, ?, ?)
+        """,
+        (
+            buyer_id,
+            100,
+            "Pending",
+        ),
+    )
+
+    order_id = order_cursor.lastrowid
+
+    conn.execute(
+        """
+        INSERT INTO order_items
+        (order_id, product_id, seller_id, quantity, price, subtotal)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (order_id, product_id, seller_id, 1, 50, 50),
+    )
+
+    conn.execute(
+        """
+        INSERT INTO reviews
+        (
+            reviewer_id,
+            product_id,
+            order_id,
+            rating,
+            review_text
+        )
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            buyer_id,
+            product_id,
+            order_id,
+            4,
+            "Good product.",
+        ),
+    )
+
+    conn.commit()
+    conn.close()
+
+    client.post(
+        "/login",
+        data={
+            "email": "rating_buyer@example.com",
+            "password": "password123",
+        },
+    )
+
+    response = client.get(f"/products/{product_id}/reviews")
+
+    assert response.status_code == 200
+    assert b"Average Rating:" in response.data
+    assert b"4.0 / 5" in response.data
+    assert b"Good product." in response.data

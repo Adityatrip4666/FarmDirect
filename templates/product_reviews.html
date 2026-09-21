@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Reviews for {{ product['name'] }}</h1>
+
+{% if average_rating is not none %}
+    <p>
+        <strong>Average Rating:</strong>
+        {{ "%.1f"|format(average_rating) }} / 5
+    </p>
+{% else %}
+    <p><strong>Average Rating:</strong> No ratings yet.</p>
+{% endif %}
+
+{% if reviews %}
+    {% for review in reviews %}
+        <div>
+            <p>
+                <strong>{{ review['reviewer_name'] }}</strong>
+            </p>
+
+            <p>
+                <strong>Rating:</strong>
+                {{ review['rating'] }} / 5
+            </p>
+
+            <p>{{ review['review_text'] }}</p>
+
+            <small>{{ review['created_at'] }}</small>
+        </div>
+
+        <hr>
+    {% endfor %}
+{% else %}
+    <p>No reviews yet.</p>
+{% endif %}
+
+<a href="{{ url_for('add_review', product_id=product['id']) }}">
+    Add Review
+</a>
+{% endblock %}

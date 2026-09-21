@@ -903,6 +903,231 @@ def order_details(order_id):
 
     return render_template("order_details.html", order=order, items=items)
 
+@app.route("/products/<int:product_id>/reviews")
+@role_required("consumer")
+def product_reviews(product_id):
+    conn = get_db_connection()
+
+    product = conn.execute(
+        """
+        SELECT *
+        FROM products
+        WHERE id = ?
+        """,
+        (product_id,),
+    ).fetchone()
+
+    if product is None:
+        conn.close()
+        flash("Product not found.", "error")
+        return redirect(url_for("marketplace"))
+
+    reviews = conn.execute(
+        """
+        SELECT
+            reviews.*,
+            users.name AS reviewer_name
+        FROM reviews
+        JOIN users ON reviews.reviewer_id = users.id
+        WHERE reviews.product_id = ?
+        ORDER BY reviews.created_at DESC
+        """,
+        (product_id,),
+    ).fetchall()
+
+    average_rating = conn.execute(
+        """
+        SELECT AVG(rating) AS average_rating
+        FROM reviews
+        WHERE product_id = ?
+        """,
+        (product_id,),
+    ).fetchone()["average_rating"]
+
+    conn.close()
+
+    return render_template(
+        "product_reviews.html",
+        product=product,
+        reviews=reviews,
+        average_rating=average_rating,
+    )
+
+
+@app.route("/products/<int:product_id>/reviews/add", methods=["GET", "POST"])
+@role_required("consumer")
+def add_review(product_id):
+    if request.method == "GET":
+        conn = get_db_connection()
+
+        product = conn.execute(
+            """
+            SELECT *
+            FROM products
+            WHERE id = ?
+            """,
+            (product_id,),
+        ).fetchone()
+
+        conn.close()
+
+        if product is None:
+            flash("Product not found.", "error")
+            return redirect(url_for("marketplace"))
+
+        return render_template(
+            "add_review.html",
+            product=product,
+        )
+
+    rating = request.form.get("rating", "").strip()
+    review_text = request.form.get("review_text", "").strip()
+
+    try:
+        rating_value = int(rating)
+    except (TypeError, ValueError):
+        flash("Rating must be a number from 1 to 5.", "error")
+        return redirect(
+            url_for(
+                "add_review",
+                product_id=product_id,
+            )
+        )
+
+    if rating_value < 1 or rating_value > 5:
+        flash("Rating must be between 1 and 5.", "error")
+        return redirect(
+            url_for(
+                "add_review",
+                product_id=product_id,
+            )
+        )
+
+    if not review_text:
+        flash("Review text is required.", "error")
+        return redirect(
+            url_for(
+                "add_review",
+                product_id=product_id,
+            )
+        )
+
+    if len(review_text) > 1000:
+        flash("Review must not exceed 1000 characters.", "error")
+        return redirect(
+            url_for(
+                "add_review",
+                product_id=product_id,
+            )
+        )
+
+    conn = get_db_connection()
+
+    product = conn.execute(
+        """
+        SELECT id
+        FROM products
+        WHERE id = ?
+        """,
+        (product_id,),
+    ).fetchone()
+
+    if product is None:
+        conn.close()
+        flash("Product not found.", "error")
+        return redirect(url_for("marketplace"))
+
+    purchase = conn.execute(
+        """
+        SELECT
+            orders.id AS order_id
+        FROM orders
+        JOIN order_items
+            ON orders.id = order_items.order_id
+        WHERE orders.buyer_id = ?
+          AND order_items.product_id = ?
+        LIMIT 1
+        """,
+        (
+            session["user_id"],
+            product_id,
+        ),
+    ).fetchone()
+
+    if purchase is None:
+        conn.close()
+        flash(
+            "You can only review products you have purchased.",
+            "error",
+        )
+        return redirect(
+            url_for(
+                "product_reviews",
+                product_id=product_id,
+            )
+        )
+
+    existing_review = conn.execute(
+        """
+        SELECT id
+        FROM reviews
+        WHERE reviewer_id = ?
+          AND product_id = ?
+          AND order_id = ?
+        """,
+        (
+            session["user_id"],
+            product_id,
+            purchase["order_id"],
+        ),
+    ).fetchone()
+
+    if existing_review is not None:
+        conn.close()
+        flash(
+            "You have already reviewed this purchase.",
+            "error",
+        )
+        return redirect(
+            url_for(
+                "product_reviews",
+                product_id=product_id,
+            )
+        )
+
+    conn.execute(
+        """
+        INSERT INTO reviews
+        (
+            reviewer_id,
+            product_id,
+            order_id,
+            rating,
+            review_text
+        )
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            session["user_id"],
+            product_id,
+            purchase["order_id"],
+            rating_value,
+            review_text,
+        ),
+    )
+
+    conn.commit()
+    conn.close()
+
+    flash("Review submitted successfully.", "success")
+
+    return redirect(
+        url_for(
+            "product_reviews",
+            product_id=product_id,
+        )
+    )
+
 
 @app.route("/requirements/add", methods=["GET", "POST"])
 @role_required("bulk_buyer")
@@ -1511,5 +1736,5 @@ def delete_product(product_id):
 
 
 if __name__ == "__main__":
-    init_db()
-    app.run(debug=True)
+    debug_mode = os.environ.get("FLASK_DEBUG", "0") == "1"
+    app.run(debug=debug_mode)

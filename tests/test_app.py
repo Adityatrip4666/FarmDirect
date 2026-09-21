@@ -31,7 +31,11 @@ def client(monkeypatch):
     with farmdirect_app.app.test_client() as client:
         yield client
 
-    os.unlink(db_path)
+    if os.path.exists(db_path):
+        try:
+            os.unlink(db_path)
+        except PermissionError:
+            pass
 
 
 def create_user(
@@ -787,6 +791,7 @@ def test_admin_can_deactivate_user(client):
     assert user["status"] == "Inactive"
 
 
+
 def test_user_can_view_notifications(client):
     conn = database.get_db_connection()
 
@@ -995,6 +1000,8 @@ def test_user_cannot_mark_another_users_notification_as_read(client):
     conn.close()
 
     assert notification["is_read"] == 0
+
+
 def test_consumer_can_review_purchased_product(client):
     from werkzeug.security import generate_password_hash
 

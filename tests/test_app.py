@@ -791,6 +791,217 @@ def test_admin_can_deactivate_user(client):
     assert user["status"] == "Inactive"
 
 
+
+def test_user_can_view_notifications(client):
+    conn = database.get_db_connection()
+
+    password_hash = generate_password_hash("password123")
+
+    cursor = conn.execute(
+        """
+        INSERT INTO users
+        (name, email, password_hash, role, status)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            "Test Consumer",
+            "notification@example.com",
+            password_hash,
+            "consumer",
+            "Active",
+        ),
+    )
+
+    user_id = cursor.lastrowid
+
+    conn.execute(
+        """
+        INSERT INTO notifications (user_id, message)
+        VALUES (?, ?)
+        """,
+        (
+            user_id,
+            "Test notification",
+        ),
+    )
+
+    conn.commit()
+    conn.close()
+
+    response = client.post(
+        "/login",
+        data={
+            "email": "notification@example.com",
+            "password": "password123",
+        },
+    )
+
+    assert response.status_code == 302
+
+    response = client.get("/notifications")
+
+    assert response.status_code == 200
+
+    
+    assert b"Test notification" in response.data
+
+def test_user_can_mark_own_notification_as_read(client):
+    conn = database.get_db_connection()
+
+    password_hash = generate_password_hash("password123")
+
+    cursor = conn.execute(
+        """
+        INSERT INTO users
+        (name, email, password_hash, role, status)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            "Test Consumer",
+            "read@example.com",
+            password_hash,
+            "consumer",
+            "Active",
+        ),
+    )
+
+    user_id = cursor.lastrowid
+
+    cursor = conn.execute(
+        """
+        INSERT INTO notifications (user_id, message)
+        VALUES (?, ?)
+        """,
+        (
+            user_id,
+            "Unread notification",
+        ),
+    )
+
+    notification_id = cursor.lastrowid
+
+    conn.commit()
+    conn.close()
+
+    client.post(
+        "/login",
+        data={
+            "email": "read@example.com",
+            "password": "password123",
+        },
+    )
+
+    response = client.post(
+        f"/notifications/{notification_id}/read",
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert b"Notification marked as read." in response.data
+
+    conn = database.get_db_connection()
+
+    notification = conn.execute(
+        """
+        SELECT is_read
+        FROM notifications
+        WHERE id = ?
+        """,
+        (notification_id,),
+    ).fetchone()
+
+    conn.close()
+
+    assert notification["is_read"] == 1
+
+
+def test_user_cannot_mark_another_users_notification_as_read(client):
+    conn = database.get_db_connection()
+
+    password_hash = generate_password_hash("password123")
+
+    cursor = conn.execute(
+        """
+        INSERT INTO users
+        (name, email, password_hash, role, status)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            "User One",
+            "userone@example.com",
+            password_hash,
+            "consumer",
+            "Active",
+        ),
+    )
+
+    user_one_id = cursor.lastrowid
+
+    cursor = conn.execute(
+        """
+        INSERT INTO users
+        (name, email, password_hash, role, status)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            "User Two",
+            "usertwo@example.com",
+            password_hash,
+            "consumer",
+            "Active",
+        ),
+    )
+
+    user_two_id = cursor.lastrowid
+
+    cursor = conn.execute(
+        """
+        INSERT INTO notifications (user_id, message)
+        VALUES (?, ?)
+        """,
+        (
+            user_two_id,
+            "Private notification",
+        ),
+    )
+
+    notification_id = cursor.lastrowid
+
+    conn.commit()
+    conn.close()
+
+    client.post(
+        "/login",
+        data={
+            "email": "userone@example.com",
+            "password": "password123",
+        },
+    )
+
+    response = client.post(
+        f"/notifications/{notification_id}/read",
+        follow_redirects=True,
+    )
+
+    assert response.status_code == 200
+    assert b"Notification not found." in response.data
+
+    conn = database.get_db_connection()
+
+    notification = conn.execute(
+        """
+        SELECT is_read
+        FROM notifications
+        WHERE id = ?
+        """,
+        (notification_id,),
+    ).fetchone()
+
+    conn.close()
+
+    assert notification["is_read"] == 0
+
+
 def test_consumer_can_review_purchased_product(client):
     from werkzeug.security import generate_password_hash
 

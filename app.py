@@ -3,6 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from database import get_db_connection, init_db
 import os
 from functools import wraps
+from price_suggestion import suggest_price
 
 
 def login_required(f):
@@ -1733,6 +1734,102 @@ def delete_product(product_id):
 
     flash("Product deleted successfully.", "success")
     return redirect(url_for("my_products"))
+
+@app.route("/notifications")
+@login_required
+def notifications():
+    conn = get_db_connection()
+
+    user_notifications = conn.execute(
+        """
+        SELECT *
+        FROM notifications
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+        """,
+        (session["user_id"],),
+    ).fetchall()
+
+    conn.close()
+
+    return render_template(
+        "notifications.html",
+        notifications=user_notifications,
+    )
+
+
+@app.route("/notifications/<int:notification_id>/read", methods=["POST"])
+@login_required
+def mark_notification_read(notification_id):
+    conn = get_db_connection()
+
+    notification = conn.execute(
+        """
+        SELECT id
+        FROM notifications
+        WHERE id = ? AND user_id = ?
+        """,
+        (notification_id, session["user_id"]),
+    ).fetchone()
+
+    if notification is None:
+        conn.close()
+        flash("Notification not found.", "error")
+        return redirect(url_for("notifications"))
+
+    conn.execute(
+        """
+        UPDATE notifications
+        SET is_read = 1
+        WHERE id = ? AND user_id = ?
+        """,
+        (notification_id, session["user_id"]),
+    )
+
+    conn.commit()
+    conn.close()
+
+    flash("Notification marked as read.", "success")
+    return redirect(url_for("notifications"))
+
+@app.route("/products/suggest-price", methods=["POST"])
+@login_required
+@role_required("farmer", "fpo")
+def suggest_product_price():
+    product_name = request.form.get("name", "").strip()
+    category = request.form.get("category", "").strip()
+    quantity = request.form.get("quantity", "").strip()
+    location = request.form.get("location", "").strip()
+    quality_details = request.form.get("quality_details", "").strip()
+
+    if not product_name or not category or not quantity or not location:
+        flash(
+            "Product name, category, quantity, and location are required.",
+            "error",
+        )
+        return redirect(url_for("add_product"))
+
+    try:
+        suggested_price = suggest_price(
+            product_name=product_name,
+            category=category,
+            quantity=quantity,
+            location=location,
+            quality_details=quality_details,
+        )
+    except ValueError as error:
+        flash(str(error), "error")
+        return redirect(url_for("add_product"))
+
+    return render_template(
+        "price_suggestion.html",
+        product_name=product_name,
+        category=category,
+        quantity=quantity,
+        location=location,
+        quality_details=quality_details,
+        suggested_price=suggested_price,
+    )
 
 
 if __name__ == "__main__":

@@ -1,0 +1,51 @@
+{
+  "image_size": [
+    224,
+    224
+  ],
+  "classes": [
+    "Fresh",
+    "Moderately Fresh",
+    "Not Fresh"
+  ],
+  "train_images": 11388,
+  "validation_images": 1417,
+  "test_images": 1355,
+  "skipped_images": 0,
+  "test_accuracy": 0.8472,
+  "confusion_matrix": [
+    [
+      405,
+      39,
+      1
+    ],
+    [
+      74,
+      302,
+      75
+    ],
+    [
+      1,
+      17,
+      441
+    ]
+  ],
+  "per_class": {
+    "Fresh": {
+      "precision": 0.8438,
+      "recall": 0.9101,
+      "support": 445
+    },
+    "Moderately Fresh": {
+      "precision": 0.8436,
+      "recall": 0.6696,
+      "support": 451
+    },
+    "Not Fresh": {
+      "precision": 0.853,
+      "recall": 0.9608,
+      "support": 459
+    }
+  },
+  "test_loss": 0.3687
+}

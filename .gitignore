@@ -13,3 +13,7 @@ instance/
 
 .venv/
 venv/
+
+data/freshness_raw/
+
+training.log

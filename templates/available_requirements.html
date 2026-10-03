@@ -1,81 +1,118 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Bulk Buyer Requirements - FarmDirect</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-    <h1>Open Bulk Buyer Requirements</h1>
+{% block title %}Bulk Buyer Requirements - FarmDirect{% endblock %}
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% for category, message in messages %}
-            <p>{{ message }}</p>
-        {% endfor %}
-    {% endwith %}
+{% block content %}
+
+<div class="section">
+
+    <div class="section-heading">
+        <h1>Bulk Buyer Requirements</h1>
+        <p>
+            Discover open requirements from bulk buyers and
+            submit offers for products you can supply.
+        </p>
+    </div>
 
     {% if requirements %}
 
+    <div class="requirement-grid">
+
         {% for requirement in requirements %}
 
-            <hr>
+        <div class="requirement-card">
 
-            <h2>{{ requirement["product_name"] }}</h2>
+            <div class="requirement-header">
 
-            <p>
-                <strong>Category:</strong>
-                {{ requirement["category"] }}
-            </p>
+                <div>
+                    <h2>{{ requirement["product_name"] }}</h2>
 
-            <p>
-                <strong>Buyer:</strong>
-                {{ requirement["buyer_name"] }}
-            </p>
+                    <span class="badge">
+                        {{ requirement["category"] }}
+                    </span>
+                </div>
 
-            <p>
-                <strong>Required Quantity:</strong>
-                {{ requirement["quantity"] }}
-            </p>
+                <span class="status status-open">
+                    {{ requirement["status"] }}
+                </span>
 
-            <p>
-                <strong>Target Price:</strong>
-                ₹{{ requirement["target_price"] }}
-            </p>
+            </div>
 
-            <p>
-                <strong>Delivery Location:</strong>
-                {{ requirement["delivery_location"] }}
-            </p>
+            <div class="requirement-meta">
 
-            <p>
-                <strong>Delivery Date:</strong>
-                {{ requirement["delivery_date"] }}
-            </p>
+                <div>
+                    <strong>Buyer</strong><br>
+                    {{ requirement["buyer_name"] }}
+                </div>
 
-            <p>
-                <strong>Status:</strong>
-                {{ requirement["status"] }}
-            </p>
-      
-            <p>
-               <a href="{{ url_for('submit_offer', requirement_id=requirement['id']) }}">
-                     Submit Offer
+                <div>
+                    <strong>Required Quantity</strong><br>
+                    {{ requirement["quantity"] }}
+                </div>
+
+                <div>
+                    <strong>Target Price</strong><br>
+                    <span class="price">
+                        ₹{{ requirement["target_price"] }}
+                    </span>
+                </div>
+
+                <div>
+                    <strong>Delivery Location</strong><br>
+                    📍 {{ requirement["delivery_location"] }}
+                </div>
+
+                <div>
+                    <strong>Delivery Date</strong><br>
+                    📅 {{ requirement["delivery_date"] }}
+                </div>
+
+            </div>
+
+            <div class="requirement-footer">
+
+                <a href="{{ url_for(
+                            'submit_offer',
+                            requirement_id=requirement['id']
+                        ) }}" class="button">
+                    Submit Offer
                 </a>
-            </p>
+
+            </div>
+
+        </div>
 
         {% endfor %}
 
+    </div>
+
     {% else %}
 
-        <p>No open bulk requirements are currently available.</p>
+    <div class="empty-state">
+
+        <div class="empty-state-icon">
+            📦
+        </div>
+
+        <h3>No Open Requirements</h3>
+
+        <p>
+            There are currently no open bulk buyer requirements.
+            Check back later for new opportunities.
+        </p>
+
+    </div>
 
     {% endif %}
 
-    <br>
+    <div class="actions">
 
-    <a href="{{ url_for('dashboard') }}">
-        Back to Dashboard
-    </a>
+        <a href="{{ url_for('dashboard') }}" class="button button-secondary">
+            Back to Dashboard
+        </a>
 
-</body>
-</html>
+    </div>
+
+</div>
+
+{% endblock %}

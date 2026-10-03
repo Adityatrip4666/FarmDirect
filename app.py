@@ -1,9 +1,19 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    session,
+    flash,
+    jsonify,
+)
 from werkzeug.security import generate_password_hash, check_password_hash
 from database import get_db_connection, init_db
 import os
 from functools import wraps
 from price_suggestion import suggest_price
+from freshness_model import predict_freshness
 
 
 def login_required(f):
@@ -41,6 +51,7 @@ def get_cart():
 
 
 app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
 
 app.secret_key = os.environ.get("SECRET_KEY")
 
@@ -1829,6 +1840,69 @@ def suggest_product_price():
         location=location,
         quality_details=quality_details,
         suggested_price=suggested_price,
+    )
+
+@app.route(
+    "/products/analyze-freshness",
+    methods=["POST"],
+)
+@login_required
+@role_required("farmer", "fpo")
+def analyze_freshness():
+    image = request.files.get("freshness_image")
+
+    try:
+        result = predict_freshness(image)
+
+    except ValueError as error:
+        return jsonify(
+            {
+                "success": False,
+                "message": str(error),
+            }
+        ), 400
+
+    except (
+        FileNotFoundError,
+        OSError,
+        RuntimeError,
+    ):
+        app.logger.exception(
+            "Freshness model analysis failed."
+        )
+
+        return jsonify(
+            {
+                "success": False,
+                "message": (
+                    "Freshness analysis is currently "
+                    "unavailable."
+                ),
+            }
+        ), 500
+
+    except Exception:
+        app.logger.exception(
+            "Unexpected freshness analysis error."
+        )
+
+        return jsonify(
+            {
+                "success": False,
+                "message": "Unable to analyze the image.",
+            }
+        ), 500
+
+    return jsonify(
+        {
+            "success": True,
+            "label": result["label"],
+            "confidence": result["confidence"],
+            "message": (
+                "AI-assisted visual freshness estimate. "
+                "This is not a laboratory or food-safety assessment."
+            ),
+        }
     )
 
 

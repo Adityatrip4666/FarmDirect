@@ -1,85 +1,141 @@
-<!DOCTYPE html>
-<html>
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <title>My Requirements - FarmDirect</title>
-</head>
+{% block title %}My Requirements - FarmDirect{% endblock %}
 
-<body>
+{% block content %}
 
-    <h1>My Bulk Requirements</h1>
+<div class="section">
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% for category, message in messages %}
-    <p>{{ message }}</p>
-    {% endfor %}
-    {% endwith %}
+    <div class="section-heading">
 
-    <p>
-        <a href="{{ url_for('add_requirement') }}">
-            Create New Requirement
-        </a>
-    </p>
+        <div class="actions" style="justify-content: space-between;">
+
+            <div>
+                <h1>My Bulk Requirements</h1>
+                <p>
+                    Manage your agricultural purchasing requirements
+                    and review offers from farmers and FPOs.
+                </p>
+            </div>
+
+            <div>
+                <a href="{{ url_for('add_requirement') }}" class="button">
+                    + Create Requirement
+                </a>
+            </div>
+
+        </div>
+
+    </div>
 
     {% if requirements %}
 
-    {% for requirement in requirements %}
+    <div class="requirement-grid">
 
-    <hr>
+        {% for requirement in requirements %}
 
-    <h2>{{ requirement["product_name"] }}</h2>
+        <div class="requirement-card">
 
-    <p>
-        <strong>Category:</strong>
-        {{ requirement["category"] }}
-    </p>
+            <div class="requirement-header">
 
-    <p>
-        <strong>Quantity:</strong>
-        {{ requirement["quantity"] }}
-    </p>
+                <div>
+                    <h2>{{ requirement["product_name"] }}</h2>
 
-    <p>
-        <strong>Target Price:</strong>
-        ₹{{ requirement["target_price"] }}
-    </p>
+                    <span class="badge">
+                        {{ requirement["category"] }}
+                    </span>
+                </div>
 
-    <p>
-        <strong>Delivery Location:</strong>
-        {{ requirement["delivery_location"] }}
-    </p>
+                {% if requirement["status"] == "Open" %}
+                <span class="status status-open">
+                    {{ requirement["status"] }}
+                </span>
+                {% elif requirement["status"] == "Closed" %}
+                <span class="status status-closed">
+                    {{ requirement["status"] }}
+                </span>
+                {% else %}
+                <span class="status">
+                    {{ requirement["status"] }}
+                </span>
+                {% endif %}
 
-    <p>
-        <strong>Delivery Date:</strong>
-        {{ requirement["delivery_date"] }}
-    </p>
+            </div>
 
-    <p>
-        <strong>Status:</strong>
-        {{ requirement["status"] }}
-    </p>
+            <div class="requirement-meta">
 
-    <p>
-        <a href="{{ url_for('requirement_offers', requirement_id=requirement['id']) }}">
-            View Offers
-        </a>
-    </p>
+                <div>
+                    <strong>Required Quantity</strong><br>
+                    {{ requirement["quantity"] }}
+                </div>
 
-    {% endfor %}
+                <div>
+                    <strong>Target Price</strong><br>
+                    <span class="price">
+                        ₹{{ requirement["target_price"] }}
+                    </span>
+                </div>
+
+                <div>
+                    <strong>Delivery Location</strong><br>
+                    📍 {{ requirement["delivery_location"] }}
+                </div>
+
+                <div>
+                    <strong>Delivery Date</strong><br>
+                    📅 {{ requirement["delivery_date"] }}
+                </div>
+
+            </div>
+
+            <div class="requirement-footer">
+
+                <a href="{{ url_for(
+                            'requirement_offers',
+                            requirement_id=requirement['id']
+                        ) }}" class="button">
+                    View Offers
+                </a>
+
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
 
     {% else %}
 
-    <p>You have not created any bulk requirements yet.</p>
+    <div class="empty-state">
+
+        <div class="empty-state-icon">
+            📦
+        </div>
+
+        <h3>No Bulk Requirements Yet</h3>
+
+        <p>
+            You have not created any bulk requirements.
+            Create one to let farmers and FPOs know what you need.
+        </p>
+
+        <a href="{{ url_for('add_requirement') }}" class="button">
+            + Create Your First Requirement
+        </a>
+
+    </div>
 
     {% endif %}
 
-    <br>
+    <div class="actions">
 
-    <a href="{{ url_for('dashboard') }}">
-        Back to Dashboard
-    </a>
+        <a href="{{ url_for('dashboard') }}" class="button button-secondary">
+            Back to Dashboard
+        </a>
 
-</body>
+    </div>
 
-</html>
+</div>
+
+{% endblock %}

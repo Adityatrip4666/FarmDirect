@@ -1,5 +1,403 @@
 {% extends "base.html" %}
+
+{% block title %}FarmDirect - Direct From Farm{% endblock %}
+
 {% block content %}
-<h1>Welcome to FarmDirect</h1>
-<p>A direct marketplace connecting farmers and FPOs with consumers and bulk buyers.</p>
+
+<!-- =========================
+     HERO SECTION
+     ========================= -->
+
+<section class="hero">
+
+    <div class="hero-content">
+
+        <span class="hero-badge">
+            🌱 Direct Farmer-to-Buyer Marketplace
+        </span>
+
+        <h1>
+            Direct From Farm.<br>
+            Better For Everyone.
+        </h1>
+
+        <p>
+            FarmDirect connects farmers and FPOs directly with
+            consumers and bulk buyers, making agricultural trade
+            simpler, more transparent, and accessible.
+        </p>
+
+        <div class="hero-actions">
+
+            {% if not session.get("user_id") %}
+
+            <a href="{{ url_for('register') }}" class="button">
+                Join FarmDirect
+            </a>
+
+            <a href="{{ url_for('login') }}" class="button button-light">
+                Login
+            </a>
+
+            {% else %}
+
+            <a href="{{ url_for('dashboard') }}" class="button">
+                Go to Dashboard
+            </a>
+
+            {% if session.get("role") in ["consumer", "bulk_buyer"] %}
+
+            <a href="{{ url_for('marketplace') }}" class="button button-light">
+                Explore Marketplace
+            </a>
+
+            {% endif %}
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================
+     HOW IT WORKS
+     ========================= -->
+
+<section class="section">
+
+    <div class="section-heading">
+        <h2>How FarmDirect Works</h2>
+
+        <p>
+            A simple platform for connecting agricultural
+            producers with buyers.
+        </p>
+    </div>
+
+    <div class="feature-grid">
+
+        <div class="feature-card">
+
+            <div class="feature-icon">
+                🌾
+            </div>
+
+            <h3>Farmers & FPOs</h3>
+
+            <p>
+                List agricultural products, manage availability,
+                receive bulk requirements, and submit offers
+                directly to buyers.
+            </p>
+
+        </div>
+
+
+        <div class="feature-card">
+
+            <div class="feature-icon">
+                🛒
+            </div>
+
+            <h3>Consumers</h3>
+
+            <p>
+                Discover agricultural products, compare prices,
+                add products to your cart, place orders, and
+                share reviews.
+            </p>
+
+        </div>
+
+
+        <div class="feature-card">
+
+            <div class="feature-icon">
+                📦
+            </div>
+
+            <h3>Bulk Buyers</h3>
+
+            <p>
+                Create bulk requirements, connect with farmers
+                and FPOs, receive offers, and manage purchasing
+                requirements.
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<div class="section-divider"></div>
+
+
+<!-- =========================
+     WHY FARMDIRECT
+     ========================= -->
+
+<section class="section">
+
+    <div class="section-heading">
+
+        <h2>Why FarmDirect?</h2>
+
+        <p>
+            Everything you need for a more direct agricultural
+            marketplace.
+        </p>
+
+    </div>
+
+    <div class="feature-grid">
+
+        <div class="feature-card">
+
+            <div class="feature-icon">
+                🤝
+            </div>
+
+            <h3>Direct Connections</h3>
+
+            <p>
+                Connect farmers and buyers without unnecessary
+                layers between them.
+            </p>
+
+        </div>
+
+
+        <div class="feature-card">
+
+            <div class="feature-icon">
+                💰
+            </div>
+
+            <h3>Transparent Pricing</h3>
+
+            <p>
+                View product prices and bulk buyer target prices
+                clearly before making purchasing decisions.
+            </p>
+
+        </div>
+
+
+        <div class="feature-card">
+
+            <div class="feature-icon">
+                ⭐
+            </div>
+
+            <h3>Reviews & Ratings</h3>
+
+            <p>
+                Consumers can review purchased products and
+                share ratings to improve marketplace transparency.
+            </p>
+
+        </div>
+
+
+        <div class="feature-card">
+
+            <div class="feature-icon">
+                🔔
+            </div>
+
+            <h3>Notifications</h3>
+
+            <p>
+                Stay informed about orders, requirements,
+                offers, and other important marketplace events.
+            </p>
+
+        </div>
+
+
+        <div class="feature-card">
+
+            <div class="feature-icon">
+                🤖
+            </div>
+
+            <h3>AI Price Assistance</h3>
+
+            <p>
+                Farmers and FPOs can receive an advisory price
+                suggestion while creating product listings.
+            </p>
+
+        </div>
+
+
+        <div class="feature-card">
+
+            <div class="feature-icon">
+                📱
+            </div>
+
+            <h3>Responsive Design</h3>
+
+            <p>
+                Access FarmDirect comfortably across desktop,
+                tablet, and mobile devices.
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<div class="section-divider"></div>
+
+
+<!-- =========================
+     JOIN BY ROLE
+     ========================= -->
+
+<section class="section">
+
+    <div class="section-heading">
+
+        <h2>Built For Everyone</h2>
+
+        <p>
+            Choose the way you want to participate in
+            FarmDirect.
+        </p>
+
+    </div>
+
+    <div class="role-grid">
+
+        <div class="role-card">
+
+            <div class="role-icon">
+                🌾
+            </div>
+
+            <h3>I'm a Farmer / FPO</h3>
+
+            <p>
+                Sell your agricultural products directly,
+                manage listings, respond to bulk requirements,
+                and receive offers from buyers.
+            </p>
+
+            {% if not session.get("user_id") %}
+
+            <a href="{{ url_for('register') }}" class="button">
+                Join as Farmer / FPO
+            </a>
+
+            {% endif %}
+
+        </div>
+
+
+        <div class="role-card">
+
+            <div class="role-icon">
+                🛒
+            </div>
+
+            <h3>I'm a Consumer</h3>
+
+            <p>
+                Browse agricultural products, add products
+                to your cart, place orders, and share
+                product reviews.
+            </p>
+
+            {% if not session.get("user_id") %}
+
+            <a href="{{ url_for('register') }}" class="button">
+                Join as Consumer
+            </a>
+
+            {% endif %}
+
+        </div>
+
+
+        <div class="role-card">
+
+            <div class="role-icon">
+                📦
+            </div>
+
+            <h3>I'm a Bulk Buyer</h3>
+
+            <p>
+                Create bulk requirements and connect with
+                farmers and FPOs who can supply the products
+                you need.
+            </p>
+
+            {% if not session.get("user_id") %}
+
+            <a href="{{ url_for('register') }}" class="button">
+                Join as Bulk Buyer
+            </a>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================
+     FINAL CTA
+     ========================= -->
+
+<section class="hero">
+
+    <div class="hero-content">
+
+        <h2>
+            Ready to connect directly?
+        </h2>
+
+        <p>
+            Join FarmDirect and become part of a direct
+            agricultural marketplace.
+        </p>
+
+        <div class="hero-actions">
+
+            {% if not session.get("user_id") %}
+
+            <a href="{{ url_for('register') }}" class="button">
+                Create Your Account
+            </a>
+
+            <a href="{{ url_for('login') }}" class="button button-light">
+                Login
+            </a>
+
+            {% else %}
+
+            <a href="{{ url_for('dashboard') }}" class="button">
+                Open Dashboard
+            </a>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</section>
+
 {% endblock %}

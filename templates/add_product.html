@@ -8,7 +8,12 @@
 
     <h1>Add Product</h1>
 
-    <form method="POST">
+    <p>
+        Create your agricultural product listing and optionally use
+        FarmDirect's AI-assisted tools before publishing it.
+    </p>
+
+    <form method="POST" enctype="multipart/form-data">
 
         <label for="name">Product Name:</label>
         <input type="text" id="name" name="name" required>
@@ -29,26 +34,12 @@
         <br><br>
 
         <label for="quantity">Quantity:</label>
-        <input
-            type="number"
-            id="quantity"
-            name="quantity"
-            min="0.01"
-            step="0.01"
-            required
-        >
+        <input type="number" id="quantity" name="quantity" min="0.01" step="0.01" required>
 
         <br><br>
 
         <label for="price">Price:</label>
-        <input
-            type="number"
-            id="price"
-            name="price"
-            min="0.01"
-            step="0.01"
-            required
-        >
+        <input type="number" id="price" name="price" min="0.01" step="0.01" required>
 
         <br><br>
 
@@ -58,22 +49,85 @@
         <br><br>
 
         <label for="quality_details">Quality Details:</label>
-        <textarea
-            id="quality_details"
-            name="quality_details"
-            rows="5"
-        ></textarea>
+        <textarea id="quality_details" name="quality_details" rows="5"></textarea>
 
         <br><br>
 
-        <div class="actions">
+        <!-- AI PRICE SUGGESTION -->
+        <div class="freshness-assessment-card">
 
-            <button
-                type="submit"
-                formaction="{{ url_for('suggest_product_price') }}"
-            >
+            <h2>AI Price Suggestion</h2>
+
+            <p>
+                Get an advisory agricultural price suggestion based on
+                the product information entered above.
+            </p>
+
+            <button type="submit" formaction="{{ url_for('suggest_product_price') }}">
                 Get AI Price Suggestion
             </button>
+
+        </div>
+
+        <br>
+
+        <!-- AI FRESHNESS ASSESSMENT -->
+        <div class="freshness-assessment-card">
+
+            <h2>AI-Assisted Freshness Assessment</h2>
+
+            <p>
+                Upload a clear crop or product image to receive an
+                AI-assisted visual freshness estimate.
+            </p>
+
+            <p class="form-help">
+                Supported formats: JPG, JPEG, PNG.
+                Maximum size: 5 MB.
+            </p>
+
+            <p class="form-help">
+                This is an advisory visual estimate and is not a
+                laboratory test or food-safety assessment.
+            </p>
+
+            <label for="freshness_image">
+                Crop / Product Image:
+            </label>
+
+            <input type="file" id="freshness_image" name="freshness_image"
+                accept=".jpg,.jpeg,.png,image/jpeg,image/png">
+
+            <br><br>
+
+            <div id="freshness-preview-container" hidden>
+                <p>
+                    <strong>Selected Image:</strong>
+                </p>
+
+                <img id="freshness-preview" src="" alt="Selected crop or product preview" style="
+                        display: block;
+                        max-width: 100%;
+                        width: 320px;
+                        max-height: 320px;
+                        object-fit: contain;
+                        border-radius: 12px;
+                        margin-bottom: 1rem;
+                    ">
+            </div>
+
+            <button type="button" id="analyze-freshness-btn">
+                Analyze Freshness
+            </button>
+
+            <div id="freshness-result" class="freshness-result" hidden aria-live="polite"></div>
+
+        </div>
+
+        <br>
+
+        <!-- FINAL PRODUCT SUBMISSION -->
+        <div class="actions">
 
             <button type="submit">
                 Add Product
@@ -84,6 +138,7 @@
     </form>
 
     <div class="actions">
+
         <a class="button button-secondary" href="{{ url_for('my_products') }}">
             My Products
         </a>
@@ -91,8 +146,206 @@
         <a class="button button-secondary" href="{{ url_for('dashboard') }}">
             Back to Dashboard
         </a>
+
     </div>
 
 </div>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const freshnessInput =
+            document.getElementById("freshness_image");
+
+        const freshnessButton =
+            document.getElementById("analyze-freshness-btn");
+
+        const freshnessResult =
+            document.getElementById("freshness-result");
+
+        const previewContainer =
+            document.getElementById(
+                "freshness-preview-container"
+            );
+
+        const previewImage =
+            document.getElementById("freshness-preview");
+
+
+        function showResult(message) {
+            freshnessResult.hidden = false;
+            freshnessResult.textContent = message;
+        }
+
+
+        freshnessInput.addEventListener(
+            "change",
+            function () {
+
+                const file = freshnessInput.files[0];
+
+                previewContainer.hidden = true;
+                previewImage.src = "";
+                freshnessResult.hidden = true;
+                freshnessResult.textContent = "";
+
+                if (!file) {
+                    return;
+                }
+
+                const allowedTypes = [
+                    "image/jpeg",
+                    "image/png"
+                ];
+
+                if (!allowedTypes.includes(file.type)) {
+                    showResult(
+                        "Please select a JPG, JPEG, or PNG image."
+                    );
+
+                    freshnessInput.value = "";
+                    return;
+                }
+
+                if (file.size > 5 * 1024 * 1024) {
+                    showResult(
+                        "Image must be 5 MB or smaller."
+                    );
+
+                    freshnessInput.value = "";
+                    return;
+                }
+
+                const objectUrl =
+                    URL.createObjectURL(file);
+
+                previewImage.src = objectUrl;
+                previewContainer.hidden = false;
+
+                previewImage.onload = function () {
+                    URL.revokeObjectURL(objectUrl);
+                };
+            }
+        );
+
+
+        freshnessButton.addEventListener(
+            "click",
+            async function () {
+
+                const file =
+                    freshnessInput.files[0];
+
+                if (!file) {
+                    showResult(
+                        "Please select an image first."
+                    );
+                    return;
+                }
+
+                const allowedTypes = [
+                    "image/jpeg",
+                    "image/png"
+                ];
+
+                if (!allowedTypes.includes(file.type)) {
+                    showResult(
+                        "Please upload a JPG, JPEG, or PNG image."
+                    );
+                    return;
+                }
+
+                if (file.size > 5 * 1024 * 1024) {
+                    showResult(
+                        "Image must be 5 MB or smaller."
+                    );
+                    return;
+                }
+
+
+                const formData =
+                    new FormData();
+
+                formData.append(
+                    "freshness_image",
+                    file
+                );
+
+
+                freshnessButton.disabled = true;
+                freshnessButton.textContent =
+                    "Analyzing...";
+
+                showResult(
+                    "Analyzing the uploaded image..."
+                );
+
+
+                try {
+
+                    const response =
+                        await fetch(
+                            "{{ url_for('analyze_freshness') }}",
+                            {
+                                method: "POST",
+                                body: formData,
+                                headers: {
+                                    "Accept": "application/json"
+                                }
+                            }
+                        );
+
+
+                    let result;
+
+                    try {
+                        result =
+                            await response.json();
+                    } catch (jsonError) {
+                        throw new Error(
+                            "The server returned an invalid response."
+                        );
+                    }
+
+
+                    if (
+                        !response.ok ||
+                        !result.success
+                    ) {
+                        throw new Error(
+                            result.message ||
+                            "Freshness analysis failed."
+                        );
+                    }
+
+
+                    showResult(
+                        "AI-assisted visual freshness estimate: "
+                        + result.label
+                        + " — "
+                        + result.confidence
+                        + "% confidence. "
+                        + result.message
+                    );
+
+                } catch (error) {
+
+                    showResult(
+                        error.message ||
+                        "Unable to analyze the image."
+                    );
+
+                } finally {
+
+                    freshnessButton.disabled = false;
+                    freshnessButton.textContent =
+                        "Analyze Freshness";
+                }
+            }
+        );
+
+    });
+</script>
 
 {% endblock %}

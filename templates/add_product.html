@@ -10,10 +10,10 @@
 
     <p>
         Create your agricultural product listing and optionally use
-        FarmDirect's AI-assisted tools before publishing it.
+        FarmDirect's AI-assisted price suggestion tool.
     </p>
 
-    <form method="POST" enctype="multipart/form-data">
+    <form method="POST" action="{{ url_for('add_product') }}" enctype="multipart/form-data">
 
         <label for="name">Product Name:</label>
         <input type="text" id="name" name="name" required>
@@ -71,14 +71,15 @@
 
         <br>
 
-        <!-- AI FRESHNESS ASSESSMENT -->
+        <!-- PRODUCT IMAGE AND FRESHNESS -->
         <div class="freshness-assessment-card">
 
             <h2>AI-Assisted Freshness Assessment</h2>
 
             <p>
-                Upload a clear crop or product image to receive an
-                AI-assisted visual freshness estimate.
+                Upload a clear image of your crop or product.
+                Save the product first, then run the freshness assessment
+                from your My Products page.
             </p>
 
             <p class="form-help">
@@ -87,13 +88,11 @@
             </p>
 
             <p class="form-help">
-                This is an advisory visual estimate and is not a
-                laboratory test or food-safety assessment.
+                This is an advisory visual estimate, not a laboratory
+                test or food-safety certification.
             </p>
 
-            <label for="freshness_image">
-                Crop / Product Image:
-            </label>
+            <label for="freshness_image">Crop / Product Image:</label>
 
             <input type="file" id="freshness_image" name="freshness_image"
                 accept=".jpg,.jpeg,.png,image/jpeg,image/png">
@@ -101,38 +100,30 @@
             <br><br>
 
             <div id="freshness-preview-container" hidden>
-                <p>
-                    <strong>Selected Image:</strong>
-                </p>
+                <p><strong>Selected Image:</strong></p>
 
                 <img id="freshness-preview" src="" alt="Selected crop or product preview" style="
-                        display: block;
-                        max-width: 100%;
-                        width: 320px;
-                        max-height: 320px;
-                        object-fit: contain;
-                        border-radius: 12px;
-                        margin-bottom: 1rem;
-                    ">
+                         display: block;
+                         max-width: 100%;
+                         width: 320px;
+                         max-height: 320px;
+                         object-fit: contain;
+                         border-radius: 12px;
+                         margin-bottom: 1rem;
+                     ">
             </div>
 
-            <button type="button" id="analyze-freshness-btn">
-                Analyze Freshness
-            </button>
-
-            <div id="freshness-result" class="freshness-result" hidden aria-live="polite"></div>
+            <p id="freshness-upload-message" class="form-help" aria-live="polite">
+                No image selected.
+            </p>
 
         </div>
 
         <br>
 
-        <!-- FINAL PRODUCT SUBMISSION -->
+        <!-- SAVE PRODUCT -->
         <div class="actions">
-
-            <button type="submit">
-                Add Product
-            </button>
-
+            <button type="submit">Add Product</button>
         </div>
 
     </form>
@@ -151,199 +142,70 @@
 
 </div>
 
-
 <script>
     document.addEventListener("DOMContentLoaded", function () {
 
         const freshnessInput =
             document.getElementById("freshness_image");
 
-        const freshnessButton =
-            document.getElementById("analyze-freshness-btn");
-
-        const freshnessResult =
-            document.getElementById("freshness-result");
-
         const previewContainer =
-            document.getElementById(
-                "freshness-preview-container"
-            );
+            document.getElementById("freshness-preview-container");
 
         const previewImage =
             document.getElementById("freshness-preview");
 
+        const uploadMessage =
+            document.getElementById("freshness-upload-message");
 
-        function showResult(message) {
-            freshnessResult.hidden = false;
-            freshnessResult.textContent = message;
-        }
+        let currentObjectUrl = null;
 
+        freshnessInput.addEventListener("change", function () {
 
-        freshnessInput.addEventListener(
-            "change",
-            function () {
+            const file = freshnessInput.files[0];
 
-                const file = freshnessInput.files[0];
+            previewContainer.hidden = true;
+            previewImage.removeAttribute("src");
 
-                previewContainer.hidden = true;
-                previewImage.src = "";
-                freshnessResult.hidden = true;
-                freshnessResult.textContent = "";
-
-                if (!file) {
-                    return;
-                }
-
-                const allowedTypes = [
-                    "image/jpeg",
-                    "image/png"
-                ];
-
-                if (!allowedTypes.includes(file.type)) {
-                    showResult(
-                        "Please select a JPG, JPEG, or PNG image."
-                    );
-
-                    freshnessInput.value = "";
-                    return;
-                }
-
-                if (file.size > 5 * 1024 * 1024) {
-                    showResult(
-                        "Image must be 5 MB or smaller."
-                    );
-
-                    freshnessInput.value = "";
-                    return;
-                }
-
-                const objectUrl =
-                    URL.createObjectURL(file);
-
-                previewImage.src = objectUrl;
-                previewContainer.hidden = false;
-
-                previewImage.onload = function () {
-                    URL.revokeObjectURL(objectUrl);
-                };
+            if (currentObjectUrl) {
+                URL.revokeObjectURL(currentObjectUrl);
+                currentObjectUrl = null;
             }
-        );
 
-
-        freshnessButton.addEventListener(
-            "click",
-            async function () {
-
-                const file =
-                    freshnessInput.files[0];
-
-                if (!file) {
-                    showResult(
-                        "Please select an image first."
-                    );
-                    return;
-                }
-
-                const allowedTypes = [
-                    "image/jpeg",
-                    "image/png"
-                ];
-
-                if (!allowedTypes.includes(file.type)) {
-                    showResult(
-                        "Please upload a JPG, JPEG, or PNG image."
-                    );
-                    return;
-                }
-
-                if (file.size > 5 * 1024 * 1024) {
-                    showResult(
-                        "Image must be 5 MB or smaller."
-                    );
-                    return;
-                }
-
-
-                const formData =
-                    new FormData();
-
-                formData.append(
-                    "freshness_image",
-                    file
-                );
-
-
-                freshnessButton.disabled = true;
-                freshnessButton.textContent =
-                    "Analyzing...";
-
-                showResult(
-                    "Analyzing the uploaded image..."
-                );
-
-
-                try {
-
-                    const response =
-                        await fetch(
-                            "{{ url_for('analyze_freshness') }}",
-                            {
-                                method: "POST",
-                                body: formData,
-                                headers: {
-                                    "Accept": "application/json"
-                                }
-                            }
-                        );
-
-
-                    let result;
-
-                    try {
-                        result =
-                            await response.json();
-                    } catch (jsonError) {
-                        throw new Error(
-                            "The server returned an invalid response."
-                        );
-                    }
-
-
-                    if (
-                        !response.ok ||
-                        !result.success
-                    ) {
-                        throw new Error(
-                            result.message ||
-                            "Freshness analysis failed."
-                        );
-                    }
-
-
-                    showResult(
-                        "AI-assisted visual freshness estimate: "
-                        + result.label
-                        + " — "
-                        + result.confidence
-                        + "% confidence. "
-                        + result.message
-                    );
-
-                } catch (error) {
-
-                    showResult(
-                        error.message ||
-                        "Unable to analyze the image."
-                    );
-
-                } finally {
-
-                    freshnessButton.disabled = false;
-                    freshnessButton.textContent =
-                        "Analyze Freshness";
-                }
+            if (!file) {
+                uploadMessage.textContent = "No image selected.";
+                return;
             }
-        );
+
+            const allowedTypes = ["image/jpeg", "image/png"];
+
+            if (!allowedTypes.includes(file.type)) {
+                uploadMessage.textContent =
+                    "Please select a JPG, JPEG, or PNG image.";
+                freshnessInput.value = "";
+                return;
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+                uploadMessage.textContent =
+                    "Image must be 5 MB or smaller.";
+                freshnessInput.value = "";
+                return;
+            }
+
+            currentObjectUrl = URL.createObjectURL(file);
+            previewImage.src = currentObjectUrl;
+            previewContainer.hidden = false;
+
+            uploadMessage.textContent =
+                "Image selected. Save the product to continue.";
+
+            previewImage.onload = function () {
+                if (currentObjectUrl) {
+                    URL.revokeObjectURL(currentObjectUrl);
+                    currentObjectUrl = null;
+                }
+            };
+        });
 
     });
 </script>

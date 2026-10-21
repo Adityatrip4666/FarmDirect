@@ -64,6 +64,24 @@ def init_db():
         )
     """)
 
+    # Add freshness fields to existing databases without deleting products.
+    product_columns = {
+        row["name"] for row in conn.execute("PRAGMA table_info(products)").fetchall()
+    }
+
+    new_columns = {
+        "image_path": "TEXT",
+        "image_hash": "TEXT",
+        "freshness_label": "TEXT",
+        "freshness_confidence": "REAL",
+        "freshness_assessed_at": "TIMESTAMP",
+        "freshness_image_hash": "TEXT",
+    }
+
+    for column_name, column_type in new_columns.items():
+        if column_name not in product_columns:
+            conn.execute(f"ALTER TABLE products ADD COLUMN {column_name} {column_type}")
+
     conn.execute("""
         CREATE TABLE IF NOT EXISTS orders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,

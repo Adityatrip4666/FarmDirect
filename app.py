@@ -14,6 +14,11 @@ import os
 from functools import wraps
 from price_suggestion import suggest_price
 from freshness_model import predict_freshness
+import hashlib
+import uuid
+from pathlib import Path
+from PIL import Image
+from werkzeug.utils import secure_filename
 
 
 def login_required(f):
@@ -50,8 +55,43 @@ def get_cart():
     return session.get("cart", {})
 
 
+def save_product_image(uploaded_file):
+    """Validate and save an uploaded product image; return path and SHA-256."""
+    if not uploaded_file or not uploaded_file.filename:
+        return None
+
+    extension = Path(secure_filename(uploaded_file.filename)).suffix.lower()
+    if extension not in ALLOWED_PRODUCT_IMAGE_EXTENSIONS:
+        raise ValueError("Upload a JPG, JPEG, or PNG product image.")
+
+    image_bytes = uploaded_file.read()
+    if not image_bytes:
+        raise ValueError("The uploaded image is empty.")
+
+    image_hash = hashlib.sha256(image_bytes).hexdigest()
+
+    try:
+        with Image.open(__import__("io").BytesIO(image_bytes)) as image:
+            image.verify()
+    except Exception as error:
+        raise ValueError("Please upload a valid JPG or PNG image.") from error
+
+    filename = f"{uuid.uuid4().hex}{extension}"
+    destination = os.path.join(PRODUCT_IMAGE_DIR, filename)
+
+    with open(destination, "wb") as image_file:
+        image_file.write(image_bytes)
+
+    return f"product_images/{filename}", image_hash
+
+
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
+
+PRODUCT_IMAGE_DIR = os.path.join(app.root_path, "static", "product_images")
+os.makedirs(PRODUCT_IMAGE_DIR, exist_ok=True)
+
+ALLOWED_PRODUCT_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png"}
 
 app.secret_key = os.environ.get("SECRET_KEY")
 
@@ -139,15 +179,10 @@ def login():
 
         conn = get_db_connection()
 
-        user = conn.execute(
-            "SELECT * FROM users WHERE email = ?",
-            (email,)
-        ).fetchone()
+        user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
 
         # Invalid credentials
-        if user is None or not check_password_hash(
-            user["password_hash"], password
-        ):
+        if user is None or not check_password_hash(user["password_hash"], password):
             conn.close()
             flash("Invalid email or password.", "error")
             return render_template("login.html")
@@ -229,14 +264,15 @@ def consumer_dashboard():
 def bulk_buyer_dashboard():
     return render_template("role_dashboard.html", role_label="Bulk Buyer")
 
+
 @app.route("/admin/dashboard")
 @role_required("admin")
 def admin_dashboard():
     conn = get_db_connection()
 
-    total_users = conn.execute(
-        "SELECT COUNT(*) AS count FROM users"
-    ).fetchone()["count"]
+    total_users = conn.execute("SELECT COUNT(*) AS count FROM users").fetchone()[
+        "count"
+    ]
 
     total_farmers = conn.execute(
         "SELECT COUNT(*) AS count FROM users WHERE role = 'farmer'"
@@ -254,13 +290,13 @@ def admin_dashboard():
         "SELECT COUNT(*) AS count FROM users WHERE role = 'bulk_buyer'"
     ).fetchone()["count"]
 
-    total_products = conn.execute(
-        "SELECT COUNT(*) AS count FROM products"
-    ).fetchone()["count"]
+    total_products = conn.execute("SELECT COUNT(*) AS count FROM products").fetchone()[
+        "count"
+    ]
 
-    total_orders = conn.execute(
-        "SELECT COUNT(*) AS count FROM orders"
-    ).fetchone()["count"]
+    total_orders = conn.execute("SELECT COUNT(*) AS count FROM orders").fetchone()[
+        "count"
+    ]
 
     open_requirements = conn.execute(
         """
@@ -293,6 +329,7 @@ def admin_dashboard():
         pending_offers=pending_offers,
     )
 
+
 @app.route("/admin/users")
 @role_required("admin")
 def admin_users():
@@ -313,10 +350,8 @@ def admin_users():
 
     conn.close()
 
-    return render_template(
-        "admin_users.html",
-        users=users
-    )
+    return render_template("admin_users.html", users=users)
+
 
 @app.route("/admin/users/<int:user_id>/deactivate", methods=["POST"])
 @role_required("admin")
@@ -357,6 +392,7 @@ def deactivate_user(user_id):
     flash("User deactivated successfully.", "success")
     return redirect(url_for("admin_users"))
 
+
 @app.route("/admin/products")
 @role_required("admin")
 def admin_products():
@@ -382,10 +418,8 @@ def admin_products():
 
     conn.close()
 
-    return render_template(
-        "admin_products.html",
-        products=products
-    )
+    return render_template("admin_products.html", products=products)
+
 
 @app.route("/admin/products/<int:product_id>/delete", methods=["POST"])
 @role_required("admin")
@@ -419,6 +453,7 @@ def delete_admin_product(product_id):
 
     flash("Product removed successfully.", "success")
     return redirect(url_for("admin_products"))
+
 
 @app.route("/user/<int:user_id>/account")
 @login_required
@@ -914,6 +949,7 @@ def order_details(order_id):
     conn.close()
 
     return render_template("order_details.html", order=order, items=items)
+
 
 @app.route("/products/<int:product_id>/reviews")
 @role_required("consumer")
@@ -1568,27 +1604,52 @@ def add_product():
             flash("Price must be a positive number.", "error")
             return render_template("add_product.html")
 
-        conn = get_db_connection()
-
-        conn.execute(
-            """
-            INSERT INTO products
-            (seller_id, name, category, quantity, price, location, quality_details)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                session["user_id"],
-                name,
-                category,
-                quantity,
-                price,
-                location,
-                quality_details,
-            ),
+        app.logger.info(
+            "Add product upload debug: content_type=%s, file_keys=%s, filename=%s",
+            request.content_type,
+            list(request.files.keys()),
+            request.files.get("freshness_image").filename
+            if request.files.get("freshness_image")
+            else None,
         )
 
-        conn.commit()
-        conn.close()
+        uploaded_image = request.files.get("freshness_image")
+
+        try:
+            saved_image = save_product_image(uploaded_image)
+        except ValueError as error:
+            flash(str(error), "error")
+            return render_template("add_product.html")
+
+        image_path = saved_image[0] if saved_image else None
+        image_hash = saved_image[1] if saved_image else None
+
+        conn = get_db_connection()
+
+        try:
+            conn.execute(
+                """
+                INSERT INTO products (
+                    seller_id, name, category, quantity, price,
+                    location, quality_details, image_path, image_hash
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    session["user_id"],
+                    name,
+                    category,
+                    quantity,
+                    price,
+                    location,
+                    quality_details,
+                    image_path,
+                    image_hash,
+                ),
+            )
+            conn.commit()
+        finally:
+            conn.close()
 
         flash("Product added successfully.", "success")
         return redirect(url_for("my_products"))
@@ -1746,6 +1807,7 @@ def delete_product(product_id):
     flash("Product deleted successfully.", "success")
     return redirect(url_for("my_products"))
 
+
 @app.route("/notifications")
 @login_required
 def notifications():
@@ -1803,6 +1865,7 @@ def mark_notification_read(notification_id):
     flash("Notification marked as read.", "success")
     return redirect(url_for("notifications"))
 
+
 @app.route("/products/suggest-price", methods=["POST"])
 @login_required
 @role_required("farmer", "fpo")
@@ -1842,6 +1905,7 @@ def suggest_product_price():
         suggested_price=suggested_price,
     )
 
+
 @app.route(
     "/products/analyze-freshness",
     methods=["POST"],
@@ -1867,24 +1931,17 @@ def analyze_freshness():
         OSError,
         RuntimeError,
     ):
-        app.logger.exception(
-            "Freshness model analysis failed."
-        )
+        app.logger.exception("Freshness model analysis failed.")
 
         return jsonify(
             {
                 "success": False,
-                "message": (
-                    "Freshness analysis is currently "
-                    "unavailable."
-                ),
+                "message": ("Freshness analysis is currently unavailable."),
             }
         ), 500
 
     except Exception:
-        app.logger.exception(
-            "Unexpected freshness analysis error."
-        )
+        app.logger.exception("Unexpected freshness analysis error.")
 
         return jsonify(
             {
@@ -1904,6 +1961,106 @@ def analyze_freshness():
             ),
         }
     )
+
+
+@app.route(
+    "/products/<int:product_id>/analyze-freshness",
+    methods=["POST"],
+)
+@login_required
+@role_required("farmer", "fpo")
+def analyze_product_freshness(product_id):
+    from io import BytesIO
+    from werkzeug.datastructures import FileStorage
+
+    conn = get_db_connection()
+
+    try:
+        product = conn.execute(
+            """
+            SELECT id, image_path, image_hash
+            FROM products
+            WHERE id = ? AND seller_id = ?
+            """,
+            (product_id, session["user_id"]),
+        ).fetchone()
+
+        if product is None:
+            flash("Product not found or access denied.", "error")
+            return redirect(url_for("my_products"))
+
+        if not product["image_path"] or not product["image_hash"]:
+            flash("Please add a product image before analyzing freshness.", "error")
+            return redirect(url_for("my_products"))
+
+        image_full_path = os.path.join(
+            app.root_path,
+            "static",
+            product["image_path"],
+        )
+
+        with open(image_full_path, "rb") as image_file:
+            image_bytes = image_file.read()
+
+        current_hash = hashlib.sha256(image_bytes).hexdigest()
+
+        if current_hash != product["image_hash"]:
+            conn.execute(
+                """
+                UPDATE products
+                SET image_hash = ?,
+                    freshness_label = NULL,
+                    freshness_confidence = NULL,
+                    freshness_assessed_at = NULL,
+                    freshness_image_hash = NULL
+                WHERE id = ? AND seller_id = ?
+                """,
+                (current_hash, product_id, session["user_id"]),
+            )
+            conn.commit()
+            flash("Image changed. Please analyze freshness again.", "error")
+            return redirect(url_for("my_products"))
+
+        image_file = FileStorage(
+            stream=BytesIO(image_bytes),
+            filename=os.path.basename(image_full_path),
+        )
+
+        result = predict_freshness(image_file)
+
+        conn.execute(
+            """
+            UPDATE products
+            SET freshness_label = ?,
+                freshness_confidence = ?,
+                freshness_assessed_at = CURRENT_TIMESTAMP,
+                freshness_image_hash = ?
+            WHERE id = ? AND seller_id = ?
+            """,
+            (
+                result["label"],
+                result["confidence"],
+                current_hash,
+                product_id,
+                session["user_id"],
+            ),
+        )
+        conn.commit()
+
+        flash("Freshness assessment saved successfully.", "success")
+
+    except (ValueError, FileNotFoundError, OSError, RuntimeError):
+        conn.rollback()
+        app.logger.exception("Product freshness analysis failed.")
+        flash(
+            "Unable to analyze freshness. Please check the image and try again.",
+            "error",
+        )
+
+    finally:
+        conn.close()
+
+    return redirect(url_for("my_products"))
 
 
 if __name__ == "__main__":

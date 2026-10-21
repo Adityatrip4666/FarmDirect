@@ -2,6 +2,8 @@
 <html>
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>My Products - FarmDirect</title>
 </head>
 
@@ -57,6 +59,54 @@
         {{ product["availability"] }}
     </p>
 
+    {% if product["image_path"] %}
+
+    <h3>Freshness Assessment</h3>
+
+    {% if product["freshness_label"]
+    and product["freshness_confidence"] is not none
+    and product["freshness_image_hash"]
+    and product["image_hash"]
+    and product["freshness_image_hash"] == product["image_hash"] %}
+
+    <p>
+        <strong>Status:</strong>
+        {{ product["freshness_label"] }}
+    </p>
+
+    <p>
+        <strong>Model Confidence:</strong>
+        {{ "%.1f"|format(product["freshness_confidence"]) }}%
+    </p>
+
+    {% if product["freshness_assessed_at"] %}
+    <p>
+        <strong>Assessed on:</strong>
+        {{ product["freshness_assessed_at"] }}
+    </p>
+    {% endif %}
+
+    {% else %}
+
+    <p>No current freshness assessment is available for this image.</p>
+
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('analyze_product_freshness', product_id=product['id']) }}">
+        <button type="submit">Analyze Freshness</button>
+    </form>
+
+    <small>
+        This is an AI-assisted visual estimate, not a food-safety
+        certification. It does not guarantee that the product is safe to eat.
+    </small>
+
+    {% else %}
+
+    <p>Add a product image before analyzing freshness.</p>
+
+    {% endif %}
+
     <p>
         <a href="{{ url_for('edit_product', product_id=product['id']) }}">
             Edit
@@ -64,11 +114,9 @@
     </p>
 
     <form method="POST" action="{{ url_for('delete_product', product_id=product['id']) }}" style="display:inline;">
-
         <button type="submit" onclick="return confirm('Are you sure you want to delete this product?');">
             Delete
         </button>
-
     </form>
 
     {% endfor %}

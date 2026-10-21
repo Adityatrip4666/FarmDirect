@@ -59,27 +59,14 @@
 
         <label for="max_price">Maximum Price:</label><br>
 
-        <input
-            type="number"
-            id="max_price"
-            name="max_price"
-            min="0"
-            step="0.01"
-            value="{{ max_price }}"
-            placeholder="e.g. 100"
-        >
+        <input type="number" id="max_price" name="max_price" min="0" step="0.01" value="{{ max_price }}"
+            placeholder="e.g. 100">
 
         <br><br>
 
         <label for="location">Location:</label><br>
 
-        <input
-            type="text"
-            id="location"
-            name="location"
-            value="{{ location }}"
-            placeholder="e.g. Uttarakhand"
-        >
+        <input type="text" id="location" name="location" value="{{ location }}" placeholder="e.g. Uttarakhand">
 
         <br><br>
 
@@ -130,6 +117,44 @@
             {{ product["quality_details"] or "Not provided." }}
         </p>
 
+
+        {% if product["freshness_label"] and
+        product["freshness_confidence"] is not none and
+        product["freshness_image_hash"] and
+        product["image_hash"] and
+        product["freshness_image_hash"] == product["image_hash"] %}
+
+        <div class="freshness-assessment">
+            <h4>AI Freshness Assessment</h4>
+
+            <p>
+                <strong>Status:</strong>
+                {{ product["freshness_label"] }}
+            </p>
+
+            <p>
+                <strong>Model Confidence:</strong>
+                {{ "%.1f"|format(product["freshness_confidence"]) }}%
+            </p>
+
+            {% if product["freshness_assessed_at"] %}
+            <p>
+                <strong>Assessed on:</strong>
+                {{ product["freshness_assessed_at"] }}
+            </p>
+            {% endif %}
+
+            <small>
+                This is an AI-assisted visual estimate, not a food-safety
+                certification. It does not guarantee that the product is safe to eat.
+            </small>
+        </div>
+
+        {% endif %}
+
+
+
+
         <p>
             <strong>Seller:</strong>
             {{ product["seller_name"] }}
@@ -151,24 +176,14 @@
 
         {% if session.get('role') == 'consumer' %}
 
-        <form
-            method="POST"
-            action="{{ url_for('add_to_cart', product_id=product['id']) }}"
-        >
+        <form method="POST" action="{{ url_for('add_to_cart', product_id=product['id']) }}">
 
             <label for="quantity-{{ product['id'] }}">
                 Quantity:
             </label>
 
-            <input
-                type="number"
-                id="quantity-{{ product['id'] }}"
-                name="quantity"
-                min="1"
-                max="{{ product['quantity'] }}"
-                value="1"
-                required
-            >
+            <input type="number" id="quantity-{{ product['id'] }}" name="quantity" min="1"
+                max="{{ product['quantity'] }}" value="1" required>
 
             <button type="submit">
                 Add to Cart

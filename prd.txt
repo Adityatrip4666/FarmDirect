@@ -368,6 +368,31 @@ FarmDirect aims to create a more transparent and efficient agricultural marketpl
 
 ---
 
+## AI Freshness assistance
+
+Implement an AI-assisted visual freshness assessment feature in FarmDirect that allows Farmers and FPOs to upload a crop/product image while creating a product listing.
+
+The system will analyze the uploaded image using a computer-vision model and provide an advisory freshness classification such as:
+
+Fresh
+Moderately Fresh
+Not Fresh
+The result should be displayed to the seller along with a confidence value. The assessment will remain advisory and must not automatically approve, reject, or modify a product listing.
+
+The feature should integrate with the existing Add Product workflow and coexist with the existing AI-based price suggestion functionality.
+
+Proposed Technology
+Python
+Flask
+TensorFlow/Keras
+Pillow
+NumPy
+Transfer learning with a suitable pre-trained computer-vision model
+HTML/CSS/JavaScript
+Existing FarmDirect SQLite database where persistence is required
+
+------
+
 ## 16. Future Enhancements
 
 - Payment gateway integration

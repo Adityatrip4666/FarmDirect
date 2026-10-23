@@ -247,6 +247,135 @@ The system never automatically overwrites the seller's final product price.
 The current implementation is a local deterministic price-suggestion engine intended
 for the college-project prototype and does not require an external AI API.
 
+### AI-Assisted Visual Freshness Assessment
+
+7.1 Overview
+
+FarmDirect includes an AI-assisted visual freshness assessment feature designed to provide an indicative freshness classification for agricultural products based on their uploaded images.
+
+The feature helps Farmers and Farmer Producer Organizations (FPOs) assess the visible freshness of produce while creating product listings. Consumers and Bulk Buyers can view the available assessment when browsing products.
+
+The feature reuses the existing TensorFlow/Keras freshness model and prediction logic. Retraining or replacing the model is outside the scope of this enhancement.
+
+7.2 Objectives
+
+Provide an AI-assisted visual freshness estimate during product listing.
+
+Display the classification and confidence value to the seller.
+
+Persist the assessment against the relevant product and analyzed image.
+
+Make valid freshness information visible to Consumers and Bulk Buyers.
+
+Prevent outdated assessments from being displayed as current.
+
+Maintain role-based permissions and server-side validation.
+
+Keep the assessment advisory rather than treating it as a definitive measure of product quality or safety.
+
+7.3 Freshness Assessment Workflow
+
+An authenticated Farmer or FPO uploads a product image through the existing Add Product workflow.
+
+The application validates the uploaded image.
+
+The server processes the image using the existing freshness prediction logic and model.
+
+The application returns a supported freshness classification and confidence value.
+
+The seller reviews the result as part of the product listing process.
+
+The application stores the assessment and its association with the product image.
+
+Consumers and Bulk Buyers can view the latest valid assessment wherever the relevant product information is displayed.
+
+The assessment must not automatically approve, reject, or otherwise modify a product listing.
+
+7.4 Supported Classifications
+
+The feature supports the following classifications:
+
+Fresh
+
+Moderately Fresh
+
+Not Fresh
+
+The system displays the associated model confidence value clearly and consistently.
+
+The confidence value represents the model's confidence in its prediction. It must not be interpreted as a percentage guarantee of actual freshness, food safety, or product quality.
+
+7.5 Seller-Side Functionality
+
+Farmers and FPOs can:
+
+Upload a product image during listing creation.
+
+Initiate freshness analysis for products they are authorized to manage.
+
+View the predicted freshness classification.
+
+View the associated confidence value.
+
+Review the result before completing the listing.
+
+Invalid, missing, corrupt, or unsupported images must be handled safely and must not cause the application to crash.
+
+The freshness result remains advisory and does not determine whether a listing can be published.
+
+7.6 Consumer-Side Functionality
+
+Consumers can:
+
+View the freshness classification on marketplace product listings.
+
+View freshness information on product detail pages, where available.
+
+View the associated confidence value.
+
+See an appropriate fallback message, such as "Freshness not assessed", when a valid assessment is unavailable.
+
+Consumers can view freshness information for products they are authorized to access but cannot initiate freshness analysis or modify assessment data.
+
+7.7 Bulk Buyer-Side Functionality
+
+Bulk Buyers can:
+
+View freshness classifications while browsing available products.
+
+View freshness information wherever product details appear in relevant bulk buyer workflows.
+
+View the associated confidence value.
+
+See the advisory disclaimer.
+
+See an appropriate fallback message when a valid assessment is unavailable.
+
+Bulk Buyers cannot initiate freshness analysis or modify classifications and confidence values.
+
+7.8 Assessment Persistence and Image Validity
+
+Each completed assessment must be associated with:
+
+The relevant product.
+
+The image used to generate the assessment.
+
+The freshness classification.
+
+The confidence value.
+
+The assessment timestamp.
+
+The application must ensure that the displayed assessment corresponds to the product's current image.
+
+If the product image changes, the previous assessment must be invalidated until a new assessment is completed. An outdated assessment must not be displayed as current.
+
+Products without a valid assessment remain available for normal browsing, subject to the application's existing listing and access rules.
+
+
+
+
 ### Administrator Dashboard
 
 The administrator dashboard provides basic platform statistics, including:

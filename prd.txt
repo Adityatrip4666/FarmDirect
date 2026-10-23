@@ -377,11 +377,13 @@ The system will analyze the uploaded image using a computer-vision model and pro
 Fresh
 Moderately Fresh
 Not Fresh
+
 The result should be displayed to the seller along with a confidence value. The assessment will remain advisory and must not automatically approve, reject, or modify a product listing.
 
 The feature should integrate with the existing Add Product workflow and coexist with the existing AI-based price suggestion functionality.
 
 Proposed Technology
+
 Python
 Flask
 TensorFlow/Keras
